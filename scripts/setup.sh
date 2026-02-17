@@ -2,7 +2,12 @@
 # OpenClaw Railway setup — runs on every container start
 set -e
 
-OPENCLAW_DIR="/root/.openclaw"
+if [ -z "$OPENCLAW_HOME" ]; then
+  echo "❌ OPENCLAW_HOME not set — add it to your Railway variables"
+  exit 1
+fi
+
+OPENCLAW_DIR="$OPENCLAW_HOME"
 WORKSPACE_DIR="$OPENCLAW_DIR/workspace"
 
 # ============================================================
@@ -99,14 +104,14 @@ CONFIG_FILE="$OPENCLAW_DIR/openclaw.json"
 if [ ! -f "$CONFIG_FILE" ]; then
   echo "Creating default openclaw.json..."
   mkdir -p "$OPENCLAW_DIR"
-  cat > "$CONFIG_FILE" << 'CONFIGEOF'
+  cat > "$CONFIG_FILE" << CONFIGEOF
 {
   "agents": {
     "defaults": {
       "model": {
         "primary": "anthropic/claude-sonnet-4-5"
       },
-      "workspace": "/root/.openclaw/workspace"
+      "workspace": "$OPENCLAW_DIR/workspace"
     }
   },
   "channels": {},
