@@ -51,13 +51,14 @@ Uses your Claude Pro/Max subscription instead of API billing.
 <summary><strong>GitHub personal access token + repo</strong></summary>
 
 1. Create a **new private repo** on GitHub — leave it completely empty (no README, no .gitignore)
-2. Go to [github.com/settings/tokens](https://github.com/settings/tokens) → **Generate new token (classic)**
-3. Give it `repo` scope
-4. Copy the token — paste it as `GITHUB_TOKEN` during deploy
-5. Paste the repo in any format as `GITHUB_WORKSPACE_REPO`:
-   - `username/my-agent`
+2. Copy the repo URL from the green **Code** button (any format works):
    - `git@github.com:username/my-agent.git`
    - `https://github.com/username/my-agent.git`
+   - or just `username/my-agent`
+3. Paste it as `GITHUB_WORKSPACE_REPO` during deploy
+4. Go to [github.com/settings/tokens](https://github.com/settings/tokens) → **Generate new token (classic)**
+5. Give it `repo` scope
+6. Copy the token — paste it as `GITHUB_TOKEN` during deploy
 
 </details>
 
