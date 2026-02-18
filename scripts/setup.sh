@@ -79,18 +79,19 @@ if [ ! -f "$CONFIG_FILE" ]; then
     --auth-choice anthropic
   echo "✓ Onboard complete"
 
-  # Post-onboard channel config (first boot only)
-  if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
-    npx openclaw config set --json channels.telegram "{\"enabled\":true,\"botToken\":\"$TELEGRAM_BOT_TOKEN\",\"dmPolicy\":\"pairing\"}"
-    echo "✓ Telegram configured"
-  fi
-
-  if [ -n "$DISCORD_BOT_TOKEN" ]; then
-    npx openclaw config set --json channels.discord "{\"enabled\":true,\"botToken\":\"$DISCORD_BOT_TOKEN\"}"
-    echo "✓ Discord configured"
-  fi
 else
   echo "Config exists, skipping onboard"
+fi
+
+# Channel config (idempotent, runs every boot)
+if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
+  npx openclaw config set --json channels.telegram "{\"enabled\":true,\"botToken\":\"$TELEGRAM_BOT_TOKEN\",\"dmPolicy\":\"pairing\"}"
+  echo "✓ Telegram configured"
+fi
+
+if [ -n "$DISCORD_BOT_TOKEN" ]; then
+  npx openclaw config set --json channels.discord "{\"enabled\":true,\"botToken\":\"$DISCORD_BOT_TOKEN\"}"
+  echo "✓ Discord configured"
 fi
 
 echo "✓ Setup complete — starting gateway"
