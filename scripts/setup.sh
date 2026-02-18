@@ -7,7 +7,7 @@ if [ -z "$OPENCLAW_HOME" ]; then
   exit 1
 fi
 
-OPENCLAW_DIR="$OPENCLAW_HOME"
+OPENCLAW_DIR="$OPENCLAW_HOME/.openclaw"
 WORKSPACE_DIR="$OPENCLAW_DIR/workspace"
 
 # ============================================================
