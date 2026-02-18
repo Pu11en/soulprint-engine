@@ -5,6 +5,7 @@
     "node": "22"
   },
   "buildAptPackages": ["git", "curl"],
+  "deployAptPackages": ["git", "curl"],
   "steps": {
     "install": {
       "commands": [
