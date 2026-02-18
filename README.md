@@ -52,12 +52,12 @@ Once deployed:
 
 ## Getting an Anthropic token
 
-The setup token is the easiest way to authenticate. It uses your existing Anthropic/Claude account and includes usage tracking.
+The setup token is the easiest way to authenticate. It uses your existing Claude Pro/Max subscription (no separate API billing).
 
-1. Install Claude Code locally: `npm install -g @anthropic-ai/claude-code`
-2. Run `claude` and complete the OAuth login
-3. Run `openclaw setup` — during onboarding, choose the **Anthropic token** option
-4. It will display a setup token — copy it
+1. Install Claude Code: `npm install -g @anthropic-ai/claude-code`
+2. Run `claude` and complete the OAuth login in your browser
+3. Run `claude setup-token`
+4. Copy the token it outputs
 5. Paste it as `ANTHROPIC_TOKEN` when deploying
 
 Alternatively, if you just want to use an API key:
