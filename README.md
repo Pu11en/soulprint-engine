@@ -1,120 +1,127 @@
 # OpenClaw Railway Template
 
-Deploy OpenClaw to Railway in one click. Get a 24/7 AI agent with persistent memory, connected to Telegram (or Discord), with full version control of your config and workspace.
+Deploy OpenClaw to Railway in one click. Get a 24/7 AI agent connected to Telegram or Discord, with your entire config and workspace backed up to GitHub.
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/2VgcTk?referralCode=jcFhp_)
 
 ## What you get
 
-- **OpenClaw Gateway** running 24/7 on Railway
-- **Everything version controlled** — config, cron jobs, workspace, memory all backed up to GitHub
-- **Telegram or Discord** connected out of the box
-- **Persistent storage** — survives redeploys via Railway volume
+- **OpenClaw Gateway** running 24/7
+- **Everything version controlled** — config, cron jobs, workspace, and memory backed up to GitHub automatically
+- **Telegram or Discord** configured out of the box
+- **Secrets never committed** — raw API keys are replaced with `${ENV_VAR}` references before the first push
 
 ## Before you deploy
 
-You'll need three things ready before clicking the deploy button:
+You need three things ready:
 
 ### 1. Anthropic authentication (pick one)
 
-**Option A: Setup token (recommended)** — uses your Claude Pro/Max subscription, no separate API billing.
+**Setup token (recommended)** — uses your Claude Pro/Max subscription.
 
 1. Install Claude Code: `npm install -g @anthropic-ai/claude-code`
-2. Run `claude` and complete the OAuth login in your browser
+2. Run `claude` and complete the OAuth login
 3. Run `claude setup-token`
-4. Copy the token it outputs
+4. Copy the token
 
-**Option B: API key** — direct billing to your Anthropic account.
+**API key** — direct billing to your Anthropic account.
 
-1. Go to [console.anthropic.com](https://console.anthropic.com/)
-2. Navigate to API Keys → Create Key
+1. Go to [console.anthropic.com](https://console.anthropic.com/) → API Keys → Create Key
 
-### 2. GitHub repo for backup
+### 2. GitHub repo
 
-Your agent's entire `.openclaw` directory (config, cron, workspace, memory) is version controlled. You need a repo to back it up to.
+Your agent's `.openclaw` directory (config, cron, workspace, memory) is version controlled and pushed to GitHub.
 
-1. Create a **new private repo** on GitHub (can be empty, no README needed)
+1. Create a **new private repo** on GitHub (leave it empty — no README, no .gitignore)
 2. Create a [personal access token](https://github.com/settings/tokens) with `repo` scope
-3. Note the repo name (e.g. `username/my-agent`)
+3. Copy the repo URL (any format works: `owner/repo`, SSH, or HTTPS)
 
-### 3. Chat channel (pick one)
+### 3. Chat channel (pick at least one)
 
 **Telegram:**
-1. Open Telegram and search for **@BotFather**
-2. Send `/newbot`
-3. Choose a name and username (must end in `bot`)
-4. Copy the token BotFather gives you (looks like `123456789:AAHdq...`)
+1. Message **@BotFather** on Telegram
+2. Send `/newbot`, pick a name and username
+3. Copy the token (looks like `123456789:AAHdq...`)
 
 **Discord:**
-1. Go to [discord.com/developers/applications](https://discord.com/developers/applications)
-2. New Application → Bot tab → Reset Token → copy it
+1. [discord.com/developers/applications](https://discord.com/developers/applications) → New Application
+2. Bot tab → Reset Token → copy it
 3. Enable **Message Content Intent** under Privileged Gateway Intents
 4. OAuth2 → URL Generator → `bot` scope + `Send Messages` → invite to your server
 
 ## Deploy
 
-Click the deploy button and fill in the variables:
+Click the deploy button and fill in:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ANTHROPIC_TOKEN` | Pick one | Setup token from `claude setup-token` |
-| `ANTHROPIC_API_KEY` | Pick one | Anthropic API key |
-| `GITHUB_TOKEN` | ✅ | GitHub personal access token with `repo` scope |
-| `GITHUB_WORKSPACE_REPO` | ✅ | e.g. `username/my-agent` |
+| `ANTHROPIC_TOKEN` | Pick one | From `claude setup-token` (recommended) |
+| `ANTHROPIC_API_KEY` | Pick one | From Anthropic console |
+| `GITHUB_TOKEN` | ✅ | GitHub PAT with `repo` scope |
+| `GITHUB_WORKSPACE_REPO` | ✅ | e.g. `owner/repo`, `git@github.com:owner/repo.git`, or HTTPS URL |
 | `TELEGRAM_BOT_TOKEN` | Pick one | From BotFather |
 | `DISCORD_BOT_TOKEN` | Pick one | From Discord Developer Portal |
-| `OPENCLAW_GATEWAY_TOKEN` | Auto | Auto-generated, protects your gateway |
-| `GIT_EMAIL` | Optional | For git commits (default: agent@openclaw.ai) |
-| `GIT_NAME` | Optional | For git commits (default: OpenClaw Agent) |
-| `NOTION_API_KEY` | Optional | For Notion integration |
+| `OPENCLAW_GATEWAY_TOKEN` | Auto | Auto-generated, secures your gateway |
+| `GIT_EMAIL` | Optional | For commits (default: agent@openclaw.ai) |
+| `GIT_NAME` | Optional | For commits (default: OpenClaw Agent) |
 | `OPENAI_API_KEY` | Optional | For OpenAI models |
-| `GEMINI_API_KEY` | Optional | For Gemini models |
+| `GEMINI_API_KEY` | Optional | For Gemini models / image generation |
+| `NOTION_API_KEY` | Optional | For Notion integration |
 
 ## After deploy
 
 1. DM your bot on Telegram (or Discord)
-2. It will ask you to approve pairing — check the Railway deploy logs for instructions
-3. Once paired, you're talking to your agent
+2. The agent will request pairing — check the deploy logs or visit the Control UI at `https://your-app.up.railway.app/openclaw`
+3. Approve the pairing
+4. You're live
 
 ## How it works
 
 ```
-/data/.openclaw/           ← Persistent volume + git repo
-├── openclaw.json          ← Config (secrets sanitized to ${ENV_VAR})
+/data/.openclaw/           ← Railway volume + git repo
+├── openclaw.json          ← Config (secrets → ${ENV_VAR} references)
 ├── cron/jobs.json         ← Scheduled tasks
-├── .gitignore             ← Excludes auth-profiles, logs, caches
+├── .gitignore             ← Excludes keys, logs, caches
 ├── agents/                ← Session state
 └── workspace/             ← Agent workspace
-    ├── AGENTS.md
-    ├── TOOLS.md
-    ├── HEARTBEAT.md
-    ├── skills/
-    └── memory/
+    ├── AGENTS.md          ← Agent instructions
+    ├── TOOLS.md           ← Tool notes + git discipline
+    ├── HEARTBEAT.md       ← Periodic check instructions
+    ├── skills/            ← Agent skills
+    └── memory/            ← Agent memory
 ```
 
-On first boot, `setup.sh` runs `openclaw onboard` to scaffold everything, sanitizes secrets in the config (replacing raw values with `${ENV_VAR}` references), and pushes the initial commit to your GitHub repo.
+### First boot
 
-On subsequent boots, it pulls the latest from git and starts the gateway. Your agent commits and pushes changes during normal operation.
+1. `setup.sh` initializes a git repo at `/data/.openclaw/`
+2. `openclaw onboard` scaffolds the config and workspace
+3. Channel config (Telegram/Discord) is injected
+4. Secrets are sanitized — raw values replaced with `${ENV_VAR}` references
+5. Git discipline instructions appended to TOOLS.md and HEARTBEAT.md
+6. Everything committed and force-pushed to your GitHub repo
+7. Gateway starts
 
-**Secrets are never committed to git.** The sanitizer replaces raw API keys and tokens with environment variable references (e.g. `${ANTHROPIC_API_KEY}`). OpenClaw resolves these from Railway's environment at runtime.
+### Subsequent boots
+
+Config already exists, gateway starts immediately. Your agent commits and pushes changes during normal operation.
 
 ## Troubleshooting
 
-### "pairing required" when DMing the bot
+### Pairing
 
-Normal on first connect. Check Railway deploy logs for the pairing code, or visit the OpenClaw Control UI at `https://your-app.up.railway.app/openclaw`.
+The first time you DM the bot, it needs pairing approval. Visit the Control UI at `https://your-app.up.railway.app/openclaw` and authenticate with your `OPENCLAW_GATEWAY_TOKEN` (find it in Railway variables).
 
 ### Bot doesn't respond
 
-- Check Railway deploy logs for errors
-- Make sure your channel token is set correctly
+- Check deploy logs for errors
+- Verify your channel token is correct
 - Redeploy to pick up variable changes
 
 ### Gateway crash loop
 
-- Ensure the volume is mounted at `/data`
-- Check that your Anthropic credentials are valid
-- Look at deploy logs for the specific error
+- Ensure the Railway volume is mounted at `/data`
+- Check that Anthropic credentials are valid
+- Check deploy logs for the specific error
 
 ## Links
 
