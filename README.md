@@ -113,6 +113,8 @@ Once you have everything ready, click the button:
 
 ## After deploy
 
+> Make sure you've added `TELEGRAM_BOT_TOKEN` or `DISCORD_BOT_TOKEN` in your Railway variables before this step.
+
 1. **DM your bot** on Telegram (or Discord)
 2. The bot will reply with a pairing code:
    ```
