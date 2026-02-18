@@ -124,11 +124,34 @@ Once you have everything ready, click the button:
    Ask the bot owner to approve with:
    openclaw pairing approve telegram ABC123
    ```
-3. **Approve the pairing** — open the Railway deploy logs (or use the Railway CLI to SSH in) and run:
+3. **Approve the pairing** — you need to run a command inside your Railway container:
+
+   **Option A: Railway CLI (recommended)**
+   ```bash
+   # Install the Railway CLI if you haven't
+   npm install -g @railway/cli
+
+   # Login to Railway
+   railway login
+
+   # Link to your project (follow the prompts)
+   railway link
+
+   # Open a shell in your running container
+   railway shell
+
+   # Once inside, approve the pairing
+   npx openclaw pairing approve telegram ABC123
+   ```
+
+   **Option B: Railway Dashboard**
+   Go to your service → **Settings** → scroll to **Execute Command** → run:
    ```
    npx openclaw pairing approve telegram ABC123
    ```
-   Replace `ABC123` with the actual code from step 2.
+
+   Replace `ABC123` with the actual code from step 2, and `telegram` with `discord` if using Discord.
+
 4. DM the bot again — you're live!
 
 Check your GitHub repo — you should see the initial commit with your agent's full config and workspace.
