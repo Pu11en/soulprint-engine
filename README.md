@@ -37,7 +37,7 @@ Click the Deploy button above. Railway will ask you to fill in environment varia
 | `DISCORD_BOT_TOKEN` | Pick one | Discord bot token |
 | `GATEWAY_AUTH_TOKEN` | Auto | Auto-generated, protects your gateway |
 | `GITHUB_TOKEN` | Optional | For workspace git backup |
-| `WORKSPACE_REPO` | Optional | e.g. `username/my-workspace` |
+| `GITHUB_WORKSPACE_REPO` | Optional | e.g. `username/my-workspace` |
 | `NOTION_API_KEY` | Optional | For Notion integration |
 | `OPENAI_API_KEY` | Optional | For OpenAI models |
 | `GEMINI_API_KEY` | Optional | For Gemini models |
@@ -108,7 +108,7 @@ To back up your agent's workspace to GitHub:
 2. Create a [personal access token](https://github.com/settings/tokens) with `repo` scope
 3. Add these variables in Railway:
    - `GITHUB_TOKEN` = your token
-   - `WORKSPACE_REPO` = `username/my-agent-workspace`
+   - `GITHUB_WORKSPACE_REPO` = `username/my-agent-workspace`
 4. Redeploy — the workspace will be cloned on first boot and pulled on restarts
 
 Your agent will automatically commit and push changes to this repo.

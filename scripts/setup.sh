@@ -11,17 +11,17 @@ export OPENCLAW_GATEWAY_TOKEN="${GATEWAY_AUTH_TOKEN}"
 # 1. Workspace initialization
 # ============================================================
 
-if [ ! -d "$WORKSPACE_DIR" ] && [ -n "$GITHUB_TOKEN" ] && [ -n "$WORKSPACE_REPO" ]; then
+if [ ! -d "$WORKSPACE_DIR" ] && [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_WORKSPACE_REPO" ]; then
   echo "First boot: cloning workspace..."
-  git clone "https://${GITHUB_TOKEN}@github.com/${WORKSPACE_REPO}.git" "$WORKSPACE_DIR"
+  git clone "https://${GITHUB_TOKEN}@github.com/${GITHUB_WORKSPACE_REPO}.git" "$WORKSPACE_DIR"
   cd "$WORKSPACE_DIR"
   git config user.email "${GIT_EMAIL:-agent@openclaw.ai}"
   git config user.name "${GIT_NAME:-OpenClaw Agent}"
-  echo "✓ Workspace cloned from $WORKSPACE_REPO"
+  echo "✓ Workspace cloned from $GITHUB_WORKSPACE_REPO"
 
 elif [ -d "$WORKSPACE_DIR/.git" ] && [ -n "$GITHUB_TOKEN" ]; then
   cd "$WORKSPACE_DIR"
-  git remote set-url origin "https://${GITHUB_TOKEN}@github.com/${WORKSPACE_REPO}.git" 2>/dev/null || true
+  git remote set-url origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_WORKSPACE_REPO}.git" 2>/dev/null || true
   git pull origin main 2>/dev/null || echo "⚠ Could not pull workspace updates"
   echo "✓ Workspace updated"
 
