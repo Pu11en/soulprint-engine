@@ -102,3 +102,4 @@ fi
 npx openclaw doctor --fix --non-interactive 2>&1 || true
 
 echo "✓ Setup complete — starting gateway"
+exec npx openclaw gateway run
