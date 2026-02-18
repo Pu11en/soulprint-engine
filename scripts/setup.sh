@@ -70,7 +70,7 @@ CONFIG_FILE="$OPENCLAW_DIR/openclaw.json"
 
 if [ ! -f "$CONFIG_FILE" ]; then
   echo "First boot: running openclaw onboard..."
-  npx openclaw onboard --non-interactive \
+  npx openclaw onboard --non-interactive --accept-risk \
     --flow quickstart \
     --gateway-bind lan \
     --gateway-port 18789 \
