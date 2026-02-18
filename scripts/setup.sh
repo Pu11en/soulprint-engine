@@ -25,20 +25,12 @@ mkdir -p "$OPENCLAW_DIR"
 
 if [ ! -d "$OPENCLAW_DIR/.git" ]; then
   cd "$OPENCLAW_DIR"
-  # Try cloning; if repo is empty, init locally and set remote
-  if git clone "https://${GITHUB_TOKEN}@github.com/${GITHUB_WORKSPACE_REPO}.git" /tmp/openclaw-clone 2>/dev/null; then
-    # Repo has content — move it into place
-    cp -a /tmp/openclaw-clone/. "$OPENCLAW_DIR/"
-    rm -rf /tmp/openclaw-clone
-    echo "✓ Repo cloned from $GITHUB_WORKSPACE_REPO"
-  else
-    # Empty or new repo — init locally
-    git init
-    git remote add origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_WORKSPACE_REPO}.git"
-    echo "✓ Initialized new repo (will push after setup)"
-  fi
+  git init
+  git remote add origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_WORKSPACE_REPO}.git"
   git config user.email "${GIT_EMAIL:-agent@openclaw.ai}"
   git config user.name "${GIT_NAME:-OpenClaw Agent}"
+  # Pull if repo has existing content (from a previous setup)
+  git fetch origin main 2>/dev/null && git checkout main 2>/dev/null || echo "✓ Empty repo, will push after setup"
 
 else
   cd "$OPENCLAW_DIR"
