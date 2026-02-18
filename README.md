@@ -1,134 +1,119 @@
 # OpenClaw Railway Template
 
-Deploy OpenClaw to Railway in one click. Get a 24/7 AI agent with persistent memory, connected to Telegram (or Discord).
+Deploy OpenClaw to Railway in one click. Get a 24/7 AI agent with persistent memory, connected to Telegram (or Discord), with full version control of your config and workspace.
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/2VgcTk?referralCode=jcFhp_)
 
 ## What you get
 
 - **OpenClaw Gateway** running 24/7 on Railway
-- **Persistent storage** — memory, config, and workspace survive redeploys
+- **Everything version controlled** — config, cron jobs, workspace, memory all backed up to GitHub
 - **Telegram or Discord** connected out of the box
-- **Workspace git sync** — optionally back up your agent's workspace to GitHub
+- **Persistent storage** — survives redeploys via Railway volume
 
-## Setup
+## Before you deploy
 
-### 1. Get your tokens ready
+You'll need three things ready before clicking the deploy button:
 
-Before clicking Deploy, you'll need:
+### 1. Anthropic authentication (pick one)
 
-**Required (pick one):**
-- **Anthropic setup token** (recommended) — see [Getting an Anthropic token](#getting-an-anthropic-token) below
-- **Anthropic API key** — [console.anthropic.com](https://console.anthropic.com/) → API Keys → Create Key
-
-**At least one channel:**
-- **Telegram bot token** — see [Getting a Telegram bot token](#getting-a-telegram-bot-token) below
-- **Discord bot token** — see [Getting a Discord bot token](#getting-a-discord-bot-token) below
-
-### 2. Deploy
-
-Click the Deploy button above. Railway will ask you to fill in environment variables:
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `ANTHROPIC_TOKEN` | Pick one | Anthropic setup token (recommended, includes usage tracking) |
-| `ANTHROPIC_API_KEY` | Pick one | Anthropic API key (direct billing) |
-| `TELEGRAM_BOT_TOKEN` | Pick one | Telegram bot token from BotFather |
-| `DISCORD_BOT_TOKEN` | Pick one | Discord bot token |
-| `OPENCLAW_GATEWAY_TOKEN` | Auto | Auto-generated, protects your gateway |
-| `GITHUB_TOKEN` | Optional | For workspace git backup |
-| `GITHUB_WORKSPACE_REPO` | Optional | e.g. `username/my-workspace` |
-| `NOTION_API_KEY` | Optional | For Notion integration |
-| `OPENAI_API_KEY` | Optional | For OpenAI models |
-| `GEMINI_API_KEY` | Optional | For Gemini models |
-
-### 3. Connect
-
-Once deployed:
-
-1. **Telegram:** DM your bot on Telegram
-2. **Discord:** Invite the bot to your server and DM it
-3. The bot will ask you to approve pairing — follow the instructions in the Railway deploy logs
-
-## Getting an Anthropic token
-
-The setup token is the easiest way to authenticate. It uses your existing Claude Pro/Max subscription (no separate API billing).
+**Option A: Setup token (recommended)** — uses your Claude Pro/Max subscription, no separate API billing.
 
 1. Install Claude Code: `npm install -g @anthropic-ai/claude-code`
 2. Run `claude` and complete the OAuth login in your browser
 3. Run `claude setup-token`
 4. Copy the token it outputs
-5. Paste it into the `ANTHROPIC_TOKEN` field on the Railway deploy form
 
-Alternatively, if you just want to use an API key:
+**Option B: API key** — direct billing to your Anthropic account.
+
 1. Go to [console.anthropic.com](https://console.anthropic.com/)
 2. Navigate to API Keys → Create Key
-3. Paste it into the `ANTHROPIC_API_KEY` field on the Railway deploy form
 
-If both are set, the setup token takes priority.
+### 2. GitHub repo for backup
 
-## Getting a Telegram bot token
+Your agent's entire `.openclaw` directory (config, cron, workspace, memory) is version controlled. You need a repo to back it up to.
 
+1. Create a **new private repo** on GitHub (can be empty, no README needed)
+2. Create a [personal access token](https://github.com/settings/tokens) with `repo` scope
+3. Note the repo name (e.g. `username/my-agent`)
+
+### 3. Chat channel (pick one)
+
+**Telegram:**
 1. Open Telegram and search for **@BotFather**
 2. Send `/newbot`
-3. Choose a name (e.g. "My AI Assistant")
-4. Choose a username (must end in `bot`, e.g. `my_ai_assistant_bot`)
-5. BotFather gives you a token like `123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw`
-6. Copy it and paste it as `TELEGRAM_BOT_TOKEN` when deploying
+3. Choose a name and username (must end in `bot`)
+4. Copy the token BotFather gives you (looks like `123456789:AAHdq...`)
 
-## Getting a Discord bot token
-
+**Discord:**
 1. Go to [discord.com/developers/applications](https://discord.com/developers/applications)
-2. **New Application** → name it
-3. Go to **Bot** tab → click **Reset Token** → copy the token
-4. **Important:** Under Privileged Gateway Intents, enable **Message Content Intent**
-5. Go to **OAuth2** → URL Generator → select `bot` scope + `Send Messages` permission
-6. Open the generated URL to invite the bot to your server
-7. Paste the token as `DISCORD_BOT_TOKEN` when deploying
+2. New Application → Bot tab → Reset Token → copy it
+3. Enable **Message Content Intent** under Privileged Gateway Intents
+4. OAuth2 → URL Generator → `bot` scope + `Send Messages` → invite to your server
 
-## Architecture
+## Deploy
+
+Click the deploy button and fill in the variables:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `ANTHROPIC_TOKEN` | Pick one | Setup token from `claude setup-token` |
+| `ANTHROPIC_API_KEY` | Pick one | Anthropic API key |
+| `GITHUB_TOKEN` | ✅ | GitHub personal access token with `repo` scope |
+| `GITHUB_WORKSPACE_REPO` | ✅ | e.g. `username/my-agent` |
+| `TELEGRAM_BOT_TOKEN` | Pick one | From BotFather |
+| `DISCORD_BOT_TOKEN` | Pick one | From Discord Developer Portal |
+| `OPENCLAW_GATEWAY_TOKEN` | Auto | Auto-generated, protects your gateway |
+| `GIT_EMAIL` | Optional | For git commits (default: agent@openclaw.ai) |
+| `GIT_NAME` | Optional | For git commits (default: OpenClaw Agent) |
+| `NOTION_API_KEY` | Optional | For Notion integration |
+| `OPENAI_API_KEY` | Optional | For OpenAI models |
+| `GEMINI_API_KEY` | Optional | For Gemini models |
+
+## After deploy
+
+1. DM your bot on Telegram (or Discord)
+2. It will ask you to approve pairing — check the Railway deploy logs for instructions
+3. Once paired, you're talking to your agent
+
+## How it works
 
 ```
-Railway Container
-├── /data/.openclaw/          ← Persistent volume
-│   ├── openclaw.json         ← Config (auto-generated on first boot)
-│   ├── workspace/            ← Agent workspace (memory, skills, tools)
-│   └── agents/               ← Session state
-├── /app/scripts/setup.sh     ← Runs on every boot
-└── openclaw gateway          ← The agent runtime
+/data/.openclaw/           ← Persistent volume + git repo
+├── openclaw.json          ← Config (secrets sanitized to ${ENV_VAR})
+├── cron/jobs.json         ← Scheduled tasks
+├── .gitignore             ← Excludes auth-profiles, logs, caches
+├── agents/                ← Session state
+└── workspace/             ← Agent workspace
+    ├── AGENTS.md
+    ├── TOOLS.md
+    ├── HEARTBEAT.md
+    ├── skills/
+    └── memory/
 ```
 
-On first boot, `setup.sh` runs `openclaw onboard` to scaffold the config. On subsequent boots, it patches in any updated channel tokens and starts the gateway.
+On first boot, `setup.sh` runs `openclaw onboard` to scaffold everything, sanitizes secrets in the config (replacing raw values with `${ENV_VAR}` references), and pushes the initial commit to your GitHub repo.
 
-## Adding a workspace repo
+On subsequent boots, it pulls the latest from git and starts the gateway. Your agent commits and pushes changes during normal operation.
 
-To back up your agent's workspace to GitHub:
-
-1. Create a private repo on GitHub (e.g. `my-agent-workspace`)
-2. Create a [personal access token](https://github.com/settings/tokens) with `repo` scope
-3. Add these variables in Railway:
-   - `GITHUB_TOKEN` = your token
-   - `GITHUB_WORKSPACE_REPO` = `username/my-agent-workspace`
-4. Redeploy — the workspace will be cloned on first boot and pulled on restarts
-
-Your agent will automatically commit and push changes to this repo.
+**Secrets are never committed to git.** The sanitizer replaces raw API keys and tokens with environment variable references (e.g. `${ANTHROPIC_API_KEY}`). OpenClaw resolves these from Railway's environment at runtime.
 
 ## Troubleshooting
 
 ### "pairing required" when DMing the bot
 
-This is normal on first connect. Check the Railway deploy logs for the pairing code, or visit the OpenClaw Control UI at `https://your-app.up.railway.app/openclaw` to approve.
+Normal on first connect. Check Railway deploy logs for the pairing code, or visit the OpenClaw Control UI at `https://your-app.up.railway.app/openclaw`.
 
 ### Bot doesn't respond
 
 - Check Railway deploy logs for errors
-- Make sure `TELEGRAM_BOT_TOKEN` or `DISCORD_BOT_TOKEN` is set correctly
-- Redeploy to pick up any variable changes
+- Make sure your channel token is set correctly
+- Redeploy to pick up variable changes
 
 ### Gateway crash loop
 
 - Ensure the volume is mounted at `/data`
-- Check that `ANTHROPIC_API_KEY` is valid
+- Check that your Anthropic credentials are valid
 - Look at deploy logs for the specific error
 
 ## Links

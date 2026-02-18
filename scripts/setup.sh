@@ -8,36 +8,52 @@ WORKSPACE_DIR="$OPENCLAW_DIR/workspace"
 export OPENCLAW_CONFIG_PATH="$OPENCLAW_DIR/openclaw.json"
 
 # ============================================================
-# 1. Git repo initialization (at .openclaw level, not workspace)
+# 1. Validate required env vars
 # ============================================================
 
-if [ ! -d "$OPENCLAW_DIR/.git" ] && [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_WORKSPACE_REPO" ]; then
-  # Fresh clone into .openclaw
-  echo "First boot: cloning repo..."
-  git clone "https://${GITHUB_TOKEN}@github.com/${GITHUB_WORKSPACE_REPO}.git" "$OPENCLAW_DIR"
-  cd "$OPENCLAW_DIR"
-  git config user.email "${GIT_EMAIL:-agent@openclaw.ai}"
-  git config user.name "${GIT_NAME:-OpenClaw Agent}"
-  echo "✓ Repo cloned from $GITHUB_WORKSPACE_REPO"
-
-elif [ -d "$OPENCLAW_DIR/.git" ] && [ -n "$GITHUB_TOKEN" ]; then
-  cd "$OPENCLAW_DIR"
-  git remote set-url origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_WORKSPACE_REPO}.git" 2>/dev/null || true
-  git pull origin main --no-rebase 2>/dev/null || echo "⚠ Could not pull repo updates"
-  echo "✓ Repo updated"
-
-else
-  mkdir -p "$WORKSPACE_DIR"
-  echo "✓ Workspace ready (no git repo configured)"
+if [ -z "$GITHUB_TOKEN" ] || [ -z "$GITHUB_WORKSPACE_REPO" ]; then
+  echo "❌ GITHUB_TOKEN and GITHUB_WORKSPACE_REPO are required"
+  echo "   Create a private repo on GitHub and add a personal access token"
+  exit 1
 fi
 
-# Remove legacy .git in workspace if it exists (we track from .openclaw now)
+# ============================================================
+# 2. Git repo initialization (at .openclaw level)
+# ============================================================
+
+mkdir -p "$OPENCLAW_DIR"
+
+if [ ! -d "$OPENCLAW_DIR/.git" ]; then
+  cd "$OPENCLAW_DIR"
+  # Try cloning; if repo is empty, init locally and set remote
+  if git clone "https://${GITHUB_TOKEN}@github.com/${GITHUB_WORKSPACE_REPO}.git" /tmp/openclaw-clone 2>/dev/null; then
+    # Repo has content — move it into place
+    cp -a /tmp/openclaw-clone/. "$OPENCLAW_DIR/"
+    rm -rf /tmp/openclaw-clone
+    echo "✓ Repo cloned from $GITHUB_WORKSPACE_REPO"
+  else
+    # Empty or new repo — init locally
+    git init
+    git remote add origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_WORKSPACE_REPO}.git"
+    echo "✓ Initialized new repo (will push after setup)"
+  fi
+  git config user.email "${GIT_EMAIL:-agent@openclaw.ai}"
+  git config user.name "${GIT_NAME:-OpenClaw Agent}"
+
+else
+  cd "$OPENCLAW_DIR"
+  git remote set-url origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_WORKSPACE_REPO}.git" 2>/dev/null || true
+  git pull origin main --no-rebase 2>/dev/null || echo "⚠ Could not pull (may be first push)"
+  echo "✓ Repo updated"
+fi
+
+# Remove legacy .git in workspace if it exists
 if [ -d "$WORKSPACE_DIR/.git" ]; then
   rm -rf "$WORKSPACE_DIR/.git"
   echo "✓ Removed legacy .git from workspace"
 fi
 
-# Ensure .gitignore exists at .openclaw level
+# Ensure .gitignore
 if [ ! -f "$OPENCLAW_DIR/.gitignore" ]; then
   cat > "$OPENCLAW_DIR/.gitignore" << 'EOF'
 # Auth & secrets
@@ -60,8 +76,40 @@ EOF
   echo "✓ Created .gitignore"
 fi
 
+# Ensure workspace has git discipline instructions
+mkdir -p "$WORKSPACE_DIR"
+if [ ! -f "$WORKSPACE_DIR/TOOLS.md" ]; then
+  cat > "$WORKSPACE_DIR/TOOLS.md" << 'TOOLSEOF'
+# TOOLS.md - Local Notes
+
+## Git Discipline
+
+**Commit and push after every set of changes.** Your entire .openclaw directory (config, cron, workspace) is version controlled. This is how your work survives container restarts.
+
+```bash
+cd /data/.openclaw && git add -A && git commit -m "description" && git push
+```
+
+Never force push. Always pull before pushing if there might be remote changes.
+TOOLSEOF
+  echo "✓ Created TOOLS.md"
+fi
+
+if [ ! -f "$WORKSPACE_DIR/HEARTBEAT.md" ]; then
+  cat > "$WORKSPACE_DIR/HEARTBEAT.md" << 'HBEOF'
+# HEARTBEAT.md
+
+## Git hygiene
+Check for uncommitted changes: `cd /data/.openclaw && git status --short`
+If there are changes, commit and push them.
+
+If nothing needs attention, reply HEARTBEAT_OK.
+HBEOF
+  echo "✓ Created HEARTBEAT.md"
+fi
+
 # ============================================================
-# 2. Google Workspace (gog CLI)
+# 3. Google Workspace (gog CLI)
 # ============================================================
 
 if [ -n "$GOG_CLIENT_CREDENTIALS_JSON" ] && [ -n "$GOG_REFRESH_TOKEN" ]; then
@@ -90,7 +138,7 @@ else
 fi
 
 # ============================================================
-# 3. OpenClaw onboard + config
+# 4. OpenClaw onboard + config
 # ============================================================
 
 if [ ! -f "$OPENCLAW_CONFIG_PATH" ]; then
@@ -120,12 +168,12 @@ if [ ! -f "$OPENCLAW_CONFIG_PATH" ]; then
   echo "✓ Onboard complete"
 
   # ============================================================
-  # 4. Sanitize secrets in config (replace raw values with ${ENV_VAR})
+  # 5. Sanitize secrets in config (replace raw values with ${ENV_VAR})
   # ============================================================
   echo "Sanitizing config secrets..."
   node -e "
     const fs = require('fs');
-    const configPath = '$OPENCLAW_CONFIG_PATH';
+    const configPath = process.env.OPENCLAW_CONFIG_PATH;
     let content = fs.readFileSync(configPath, 'utf8');
 
     const replacements = [
@@ -149,13 +197,13 @@ if [ ! -f "$OPENCLAW_CONFIG_PATH" ]; then
     console.log('✓ Config sanitized');
   "
 
-  # Initial commit
-  if [ -d "$OPENCLAW_DIR/.git" ]; then
-    cd "$OPENCLAW_DIR"
-    git add -A
-    git commit -m "initial setup" 2>/dev/null || true
-    git push 2>/dev/null || echo "⚠ Could not push initial commit"
-  fi
+  # Initial commit + push
+  cd "$OPENCLAW_DIR"
+  git add -A
+  git commit -m "initial setup" 2>/dev/null || true
+  git branch -M main 2>/dev/null || true
+  git push -u origin main 2>/dev/null || echo "⚠ Could not push initial commit"
+  echo "✓ Initial state committed and pushed"
 
 else
   echo "Config exists, skipping onboard"
