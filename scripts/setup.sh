@@ -23,17 +23,23 @@ fi
 
 mkdir -p "$OPENCLAW_DIR"
 
+# Normalize repo input: accept SSH URLs, HTTPS URLs, or owner/repo shorthand
+REPO_URL="$GITHUB_WORKSPACE_REPO"
+# git@github.com:owner/repo.git → owner/repo
+REPO_URL=$(echo "$REPO_URL" | sed 's|^git@github.com:||; s|^https://github.com/||; s|\.git$||')
+REMOTE_URL="https://${GITHUB_TOKEN}@github.com/${REPO_URL}.git"
+
 if [ ! -d "$OPENCLAW_DIR/.git" ]; then
   cd "$OPENCLAW_DIR"
   git init -b main
-  git remote add origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_WORKSPACE_REPO}.git"
+  git remote add origin "$REMOTE_URL"
   git config user.email "${GIT_EMAIL:-agent@openclaw.ai}"
   git config user.name "${GIT_NAME:-OpenClaw Agent}"
   echo "✓ Git initialized"
 
 else
   cd "$OPENCLAW_DIR"
-  git remote set-url origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_WORKSPACE_REPO}.git" 2>/dev/null || true
+  git remote set-url origin "$REMOTE_URL" 2>/dev/null || true
   echo "✓ Repo ready"
 fi
 
