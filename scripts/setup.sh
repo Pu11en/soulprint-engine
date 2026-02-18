@@ -119,18 +119,51 @@ if [ ! -f "$OPENCLAW_CONFIG_PATH" ]; then
   # Remove nested .git that onboard creates in workspace
   rm -rf "$WORKSPACE_DIR/.git" 2>/dev/null || true
 
-  # Run doctor --fix before sanitizing (doctor may modify config)
+  # Run doctor --fix (may modify config)
   npx openclaw doctor --fix --non-interactive 2>&1 || true
 
   # ============================================================
-  # 5. Sanitize secrets in config (replace raw values with ${ENV_VAR})
+  # 5. Inject channel config + sanitize secrets
   # ============================================================
-  echo "Sanitizing config secrets..."
+  echo "Configuring channels and sanitizing secrets..."
   node -e "
     const fs = require('fs');
     const configPath = process.env.OPENCLAW_CONFIG_PATH;
-    let content = fs.readFileSync(configPath, 'utf8');
+    const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
+    // Inject channels
+    if (!cfg.channels) cfg.channels = {};
+
+    if (process.env.TELEGRAM_BOT_TOKEN) {
+      cfg.channels.telegram = {
+        enabled: true,
+        botToken: process.env.TELEGRAM_BOT_TOKEN,
+        dmPolicy: 'pairing',
+        groupPolicy: 'allowlist',
+      };
+      if (!cfg.plugins) cfg.plugins = {};
+      if (!cfg.plugins.entries) cfg.plugins.entries = {};
+      cfg.plugins.entries.telegram = { enabled: true };
+      console.log('✓ Telegram configured');
+    }
+
+    if (process.env.DISCORD_BOT_TOKEN) {
+      cfg.channels.discord = {
+        enabled: true,
+        token: process.env.DISCORD_BOT_TOKEN,
+        groupPolicy: 'allowlist',
+        dm: { policy: 'pairing' },
+      };
+      if (!cfg.plugins) cfg.plugins = {};
+      if (!cfg.plugins.entries) cfg.plugins.entries = {};
+      cfg.plugins.entries.discord = { enabled: true };
+      console.log('✓ Discord configured');
+    }
+
+    // Write config with channels
+    let content = JSON.stringify(cfg, null, 2);
+
+    // Sanitize secrets (replace raw values with env var references)
     const replacements = [
       [process.env.OPENCLAW_GATEWAY_TOKEN, '\${OPENCLAW_GATEWAY_TOKEN}'],
       [process.env.ANTHROPIC_API_KEY, '\${ANTHROPIC_API_KEY}'],
