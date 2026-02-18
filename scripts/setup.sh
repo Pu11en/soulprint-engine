@@ -76,37 +76,7 @@ EOF
   echo "✓ Created .gitignore"
 fi
 
-# Ensure workspace has git discipline instructions
 mkdir -p "$WORKSPACE_DIR"
-if [ ! -f "$WORKSPACE_DIR/TOOLS.md" ]; then
-  cat > "$WORKSPACE_DIR/TOOLS.md" << 'TOOLSEOF'
-# TOOLS.md - Local Notes
-
-## Git Discipline
-
-**Commit and push after every set of changes.** Your entire .openclaw directory (config, cron, workspace) is version controlled. This is how your work survives container restarts.
-
-```bash
-cd /data/.openclaw && git add -A && git commit -m "description" && git push
-```
-
-Never force push. Always pull before pushing if there might be remote changes.
-TOOLSEOF
-  echo "✓ Created TOOLS.md"
-fi
-
-if [ ! -f "$WORKSPACE_DIR/HEARTBEAT.md" ]; then
-  cat > "$WORKSPACE_DIR/HEARTBEAT.md" << 'HBEOF'
-# HEARTBEAT.md
-
-## Git hygiene
-Check for uncommitted changes: `cd /data/.openclaw && git status --short`
-If there are changes, commit and push them.
-
-If nothing needs attention, reply HEARTBEAT_OK.
-HBEOF
-  echo "✓ Created HEARTBEAT.md"
-fi
 
 # ============================================================
 # 3. Google Workspace (gog CLI)
@@ -196,6 +166,35 @@ if [ ! -f "$OPENCLAW_CONFIG_PATH" ]; then
     fs.writeFileSync(configPath, content);
     console.log('✓ Config sanitized');
   "
+
+  # ============================================================
+  # 6. Append git discipline to workspace files
+  # ============================================================
+  if ! grep -q "Git Discipline" "$WORKSPACE_DIR/TOOLS.md" 2>/dev/null; then
+    cat >> "$WORKSPACE_DIR/TOOLS.md" << 'TOOLSEOF'
+
+## Git Discipline
+
+**Commit and push after every set of changes.** Your entire .openclaw directory (config, cron, workspace) is version controlled. This is how your work survives container restarts.
+
+```bash
+cd /data/.openclaw && git add -A && git commit -m "description" && git push
+```
+
+Never force push. Always pull before pushing if there might be remote changes.
+TOOLSEOF
+    echo "✓ Added git discipline to TOOLS.md"
+  fi
+
+  if ! grep -q "Git hygiene" "$WORKSPACE_DIR/HEARTBEAT.md" 2>/dev/null; then
+    cat >> "$WORKSPACE_DIR/HEARTBEAT.md" << 'HBEOF'
+
+## Git hygiene
+Check for uncommitted changes: `cd /data/.openclaw && git status --short`
+If there are changes, commit and push them.
+HBEOF
+    echo "✓ Added git hygiene to HEARTBEAT.md"
+  fi
 
   # Initial commit + push
   cd "$OPENCLAW_DIR"
