@@ -137,6 +137,12 @@ if [ ! -f "$OPENCLAW_CONFIG_PATH" ]; then
     $AUTH_ARGS
   echo "✓ Onboard complete"
 
+  # Remove nested .git that onboard creates in workspace
+  rm -rf "$WORKSPACE_DIR/.git" 2>/dev/null || true
+
+  # Run doctor --fix before sanitizing (doctor may modify config)
+  npx openclaw doctor --fix --non-interactive 2>&1 || true
+
   # ============================================================
   # 5. Sanitize secrets in config (replace raw values with ${ENV_VAR})
   # ============================================================
@@ -207,9 +213,6 @@ HBEOF
 else
   echo "Config exists, skipping onboard"
 fi
-
-# Run doctor --fix to apply any pending changes
-npx openclaw doctor --fix --non-interactive 2>&1 || true
 
 echo "✓ Setup complete — starting gateway"
 exec npx openclaw gateway run
