@@ -161,10 +161,13 @@ if [ ! -f "$OPENCLAW_CONFIG_PATH" ]; then
 
   # Initial commit + push
   cd "$OPENCLAW_DIR"
-  git add -A
-  git commit -m "initial setup" 2>/dev/null || true
-  git branch -M main 2>/dev/null || true
-  git push -u origin main 2>/dev/null || echo "⚠ Could not push initial commit"
+  echo "Git status before commit:"
+  git status --short
+  git add -A || echo "⚠ git add failed"
+  echo "Git status after add:"
+  git status --short
+  git commit -m "initial setup" || echo "⚠ git commit failed"
+  git push -u origin main || echo "⚠ git push failed"
   echo "✓ Initial state committed and pushed"
 
 else
