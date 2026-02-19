@@ -82,13 +82,16 @@
           </p>
           <details class="text-xs text-gray-500 mb-3">
             <summary class="cursor-pointer hover:text-gray-300">Step-by-step instructions</summary>
-            <ol class="list-decimal list-inside space-y-1 mt-2 ml-1">
-              <li>Go to Google Cloud Console → APIs & Services → Credentials</li>
-              <li>Create a new OAuth 2.0 Client ID (Web application)</li>
+            <ol class="list-decimal list-inside space-y-1.5 mt-2 ml-1">
+              <li><a href="https://console.cloud.google.com/projectcreate" target="_blank" class="text-blue-400 hover:text-blue-300">Create a Google Cloud project</a> (or use an existing one)</li>
+              <li>Go to <a href="https://console.cloud.google.com/apis/credentials/consent" target="_blank" class="text-blue-400 hover:text-blue-300">OAuth consent screen</a> → set to <strong>External</strong>, fill in app name and email</li>
+              <li>Under <strong>Test users</strong>, add your own email address</li>
+              <li><a href="https://console.cloud.google.com/apis/library" target="_blank" class="text-blue-400 hover:text-blue-300">Enable APIs</a>: Gmail, Calendar, Drive, Contacts, Sheets</li>
+              <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="text-blue-400 hover:text-blue-300">Credentials</a> → Create OAuth 2.0 Client ID (Web application)</li>
               <li>Add authorized redirect URI: <code id="redirectUri" class="bg-black/40 px-1 rounded text-gray-400"></code></li>
-              <li>Enable APIs: Gmail, Calendar, Drive, Contacts, Sheets</li>
               <li>Download the credentials JSON or copy Client ID + Secret</li>
             </ol>
+            <p class="mt-2 text-yellow-500/80">⚠️ Your app will be in "Testing" mode. Only emails listed as Test Users can sign in. You can add up to 100 test users without needing Google verification.</p>
           </details>
         </div>
         <div>
