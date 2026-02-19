@@ -234,7 +234,12 @@
       const scopes = getSelectedScopes();
       if (scopes.length === 0) { alert('Select at least one service'); return; }
       const authUrl = `/auth/google/start?email=${encodeURIComponent(email)}&services=${scopes.join(',')}`;
-      window.open(authUrl, 'google-auth', 'width=500,height=700,left=200,top=100');
+      // Must open popup synchronously in click handler to avoid blockers
+      const popup = window.open(authUrl, 'google-auth', 'popup=yes,width=500,height=700');
+      if (!popup || popup.closed) {
+        // Popup blocked — fall back to redirect
+        window.location.href = authUrl;
+      }
     }
 
     async function refresh() {
