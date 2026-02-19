@@ -466,10 +466,13 @@ function getChannelStatus() {
       // Check for paired users
       let paired = 0;
       try {
-        const allowFile = `${credDir}/${ch}-allowFrom.json`;
-        if (fs.existsSync(allowFile)) {
-          const data = JSON.parse(fs.readFileSync(allowFile, 'utf8'));
-          paired = (data.allowFrom || []).length;
+        // Check all allowFrom files for this channel (e.g. telegram-default-allowFrom.json)
+        const files = fs.readdirSync(credDir).filter(f =>
+          f.startsWith(`${ch}-`) && f.endsWith('-allowFrom.json')
+        );
+        for (const file of files) {
+          const data = JSON.parse(fs.readFileSync(`${credDir}/${file}`, 'utf8'));
+          paired += (data.allowFrom || []).length;
         }
       } catch {}
 
