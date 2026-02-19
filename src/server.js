@@ -139,8 +139,15 @@ app.get('/api/gateway-status', async (req, res) => {
   res.json(result);
 });
 
+// Cache for pairing results (avoid spawning CLI every poll)
+let pairingCache = { pending: [], ts: 0 };
+const PAIRING_CACHE_TTL = 10000; // 10s
+
 // API: list pending pairings across all channels
 app.get('/api/pairings', async (req, res) => {
+  if (Date.now() - pairingCache.ts < PAIRING_CACHE_TTL) {
+    return res.json({ pending: pairingCache.pending });
+  }
   console.log('[wrapper] Fetching pending pairings...');
   const channels = ['telegram', 'discord'];
   const pending = [];
@@ -214,6 +221,7 @@ app.get('/api/pairings', async (req, res) => {
   }
 
   console.log(`[wrapper] Total pending pairings: ${pending.length}`);
+  pairingCache = { pending, ts: Date.now() };
   res.json({ pending });
 });
 
