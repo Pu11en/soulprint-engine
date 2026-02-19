@@ -438,7 +438,11 @@ app.get('/auth/google/callback', async (req, res) => {
     });
 
     const tokens = await tokenRes.json();
-    console.log(`[wrapper] Google token exchange: ${tokenRes.status} has_refresh=${!!tokens.refresh_token}`);
+    console.log(`[wrapper] Google token exchange: status=${tokenRes.status} has_refresh=${!!tokens.refresh_token} error=${tokens.error || 'none'} desc=${tokens.error_description || 'none'}`);
+
+    if (tokens.error) {
+      throw new Error(`Google token error: ${tokens.error_description || tokens.error}`);
+    }
 
     if (!tokens.refresh_token) {
       // No refresh token = already authorized before. Check if we have one stored.
