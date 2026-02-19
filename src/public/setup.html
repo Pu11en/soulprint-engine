@@ -150,16 +150,24 @@
         // Channels
         const channelsEl = document.getElementById('channels');
         const allChannels = ['telegram', 'discord'];
-        channelsEl.innerHTML = allChannels.map(ch => `
-          <div class="flex justify-between items-center py-1.5">
+        channelsEl.innerHTML = allChannels.map(ch => {
+          const info = status.channels?.[ch];
+          let badgeClass, badgeText;
+          if (!info) {
+            badgeClass = 'bg-gray-800 text-gray-500';
+            badgeText = 'Not configured';
+          } else if (info.status === 'paired') {
+            badgeClass = 'bg-green-500/10 text-green-500';
+            badgeText = `Paired (${info.paired})`;
+          } else {
+            badgeClass = 'bg-yellow-500/10 text-yellow-500';
+            badgeText = 'Awaiting pairing';
+          }
+          return `<div class="flex justify-between items-center py-1.5">
             <span class="font-medium text-sm">${ch.charAt(0).toUpperCase() + ch.slice(1)}</span>
-            <span class="text-xs px-2 py-0.5 rounded-full font-medium ${
-              status.channels?.[ch]
-                ? 'bg-green-500/10 text-green-500'
-                : 'bg-gray-800 text-gray-500'
-            }">${status.channels?.[ch] ? 'Connected' : 'Not configured'}</span>
-          </div>
-        `).join('');
+            <span class="text-xs px-2 py-0.5 rounded-full font-medium ${badgeClass}">${badgeText}</span>
+          </div>`;
+        }).join('');
 
         // Pairings
         const pairingsEl = document.getElementById('pairings');

@@ -428,9 +428,25 @@ function getBaseUrl(req) {
 function getChannelStatus() {
   try {
     const config = JSON.parse(fs.readFileSync(`${OPENCLAW_DIR}/openclaw.json`, 'utf8'));
+    const credDir = `${OPENCLAW_DIR}/credentials`;
     const channels = {};
-    if (config.channels?.telegram?.enabled) channels.telegram = 'configured';
-    if (config.channels?.discord?.enabled) channels.discord = 'configured';
+
+    for (const ch of ['telegram', 'discord']) {
+      if (!config.channels?.[ch]?.enabled) continue;
+
+      // Check for paired users
+      let paired = 0;
+      try {
+        const allowFile = `${credDir}/${ch}-allowFrom.json`;
+        if (fs.existsSync(allowFile)) {
+          const data = JSON.parse(fs.readFileSync(allowFile, 'utf8'));
+          paired = (data.allowFrom || []).length;
+        }
+      } catch {}
+
+      channels[ch] = { status: paired > 0 ? 'paired' : 'configured', paired };
+    }
+
     return channels;
   } catch {
     return {};
