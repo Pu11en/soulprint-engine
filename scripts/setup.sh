@@ -26,8 +26,8 @@ export XDG_CONFIG_HOME="$OPENCLAW_DIR"
 
 if ! command -v gog &> /dev/null; then
   echo "Installing gog CLI..."
-  GOG_VERSION="${GOG_VERSION:-v0.11.0}"
-  curl -fsSL "https://github.com/steipete/gogcli/releases/download/${GOG_VERSION}/gog_${GOG_VERSION}_linux_amd64.tar.gz" -o /tmp/gog.tar.gz
+  GOG_VERSION="${GOG_VERSION:-0.11.0}"
+  curl -fsSL "https://github.com/steipete/gogcli/releases/download/v${GOG_VERSION}/gogcli_${GOG_VERSION}_linux_amd64.tar.gz" -o /tmp/gog.tar.gz
   tar -xzf /tmp/gog.tar.gz -C /tmp/
   mv /tmp/gog /usr/local/bin/gog
   chmod +x /usr/local/bin/gog
