@@ -118,6 +118,7 @@ Once you have everything ready, click the button:
 | `OPENCLAW_GATEWAY_TOKEN` | 🔒 Auto | Auto-generated, secures your gateway |
 | `PORT` | 🔒 Auto | Set by Railway |
 | `WEBHOOK_TOKEN` | 🔒 Auto | Auto-generated, secures webhook endpoints |
+| `SETUP_PASSWORD` | Optional | Password-protect the setup UI (recommended in production) |
 | `GIT_EMAIL` | Optional | For commits (default: agent@openclaw.ai) |
 | `GIT_NAME` | Optional | For commits (default: OpenClaw Agent) |
 | `OPENAI_API_KEY` | Optional | For OpenAI models + memory embeddings |
@@ -127,41 +128,24 @@ Once you have everything ready, click the button:
 
 ## After deploy
 
-> Make sure you've added `TELEGRAM_BOT_TOKEN` or `DISCORD_BOT_TOKEN` in your Railway variables before this step.
+Once deployed, open the setup UI at your Railway URL (e.g. `https://your-app.up.railway.app/setup`). If you set `SETUP_PASSWORD`, you'll be prompted to log in first.
 
-1. **DM your bot** on Telegram (or Discord)
-2. The bot will reply with a pairing code:
-   ```
-   OpenClaw: access not configured.
-   Your Telegram user id: 123456789
-   Pairing code: ABC123
-   Ask the bot owner to approve with:
-   openclaw pairing approve telegram ABC123
-   ```
-3. **Approve the pairing** — you need to run a command inside your Railway container:
+### 1. Approve channel pairing
 
-   You need to run a command inside your Railway container using the Railway CLI:
+DM your bot on Telegram (or Discord). It will reply with a pairing code. The setup UI shows pending pairings — click **Approve** to connect.
 
-   ```bash
-   # Install the Railway CLI if you haven't
-   npm install -g @railway/cli
+### 2. Connect Google Workspace (optional)
 
-   # Login to Railway
-   railway login
+The setup UI lets you connect Gmail, Calendar, Drive, Contacts, and Sheets:
 
-   # Link to your project (follow the prompts)
-   railway link
+1. Click **Set up Google** and enter your OAuth client credentials (from [Google Cloud Console](https://console.cloud.google.com/apis/credentials))
+2. Select which permissions to grant
+3. Click **Sign in with Google** to complete the OAuth flow
+4. The UI shows API status for each service — click **Enable API** links for any that need enabling
 
-   # SSH into your running container
-   railway ssh
+### 3. Start chatting
 
-   # Once inside, approve the pairing
-   npx openclaw pairing approve telegram ABC123
-   ```
-
-   Replace `ABC123` with the actual code from step 2, and `telegram` with `discord` if using Discord.
-
-4. DM the bot again — you're live!
+DM your bot again — you're live!
 
 Check your GitHub repo — you should see the initial commit with your agent's full config and workspace.
 
@@ -196,11 +180,28 @@ Check your GitHub repo — you should see the initial commit with your agent's f
 
 Config exists, gateway starts immediately. Your agent commits and pushes changes during normal operation.
 
+## Local development
+
+Run the full stack locally with Docker:
+
+```bash
+# Copy and fill in your env vars
+cp .env.example .env
+
+# Start the container
+docker compose up
+
+# Visit the setup UI
+open http://localhost:3000/setup
+```
+
+Source files in `src/` are mounted as a volume — edit locally and restart the container to pick up changes. Client-side JS changes (`src/public/`) only need a browser refresh.
+
 ## Troubleshooting
 
 ### Pairing
 
-First time you DM the bot, it replies with a pairing code. You need to approve it by running the command shown in the bot's reply. Use Railway's CLI (`railway shell`) or the deploy logs to run it.
+First time you DM the bot, it replies with a pairing code. Approve it in the setup UI at `/setup`. If the pairing doesn't appear, refresh the page.
 
 ### Bot doesn't respond
 

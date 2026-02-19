@@ -1,15 +1,24 @@
+const authFetch = async (url, opts = {}) => {
+  const res = await fetch(url, opts);
+  if (res.status === 401) {
+    window.location.href = '/setup';
+    throw new Error('Unauthorized');
+  }
+  return res;
+};
+
 export async function fetchStatus() {
-  const res = await fetch('/api/status');
+  const res = await authFetch('/api/status');
   return res.json();
 }
 
 export async function fetchPairings() {
-  const res = await fetch('/api/pairings');
+  const res = await authFetch('/api/pairings');
   return res.json();
 }
 
 export async function approvePairing(id, channel) {
-  const res = await fetch(`/api/pairings/${id}/approve`, {
+  const res = await authFetch(`/api/pairings/${id}/approve`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ channel }),
@@ -18,7 +27,7 @@ export async function approvePairing(id, channel) {
 }
 
 export async function rejectPairing(id, channel) {
-  const res = await fetch(`/api/pairings/${id}/reject`, {
+  const res = await authFetch(`/api/pairings/${id}/reject`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ channel }),
@@ -27,17 +36,17 @@ export async function rejectPairing(id, channel) {
 }
 
 export async function fetchGoogleStatus() {
-  const res = await fetch('/api/google/status');
+  const res = await authFetch('/api/google/status');
   return res.json();
 }
 
 export async function checkGoogleApis() {
-  const res = await fetch('/api/google/check');
+  const res = await authFetch('/api/google/check');
   return res.json();
 }
 
 export async function saveGoogleCredentials(clientId, clientSecret, email) {
-  const res = await fetch('/api/google/credentials', {
+  const res = await authFetch('/api/google/credentials', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ clientId, clientSecret, email }),
@@ -46,6 +55,6 @@ export async function saveGoogleCredentials(clientId, clientSecret, email) {
 }
 
 export async function disconnectGoogle() {
-  const res = await fetch('/api/google/disconnect', { method: 'POST' });
+  const res = await authFetch('/api/google/disconnect', { method: 'POST' });
   return res.json();
 }

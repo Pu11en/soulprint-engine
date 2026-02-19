@@ -22,7 +22,7 @@ function getApiEnableUrl(svc) {
   return `https://console.developers.google.com/apis/api/${API_ENABLE_URLS[svc] || ''}/overview`;
 }
 
-export function ScopePicker({ scopes, onToggle, apiStatus }) {
+export function ScopePicker({ scopes, onToggle, apiStatus, loading }) {
   const status = apiStatus || {};
 
   return html`<div class="space-y-2">
@@ -31,9 +31,11 @@ export function ScopePicker({ scopes, onToggle, apiStatus }) {
       const writeOn = scopes.includes(`${s.key}:write`);
       const api = status[s.key];
       let apiIndicator = null;
-      if (api) {
+      if (loading && !api && (readOn || writeOn)) {
+        apiIndicator = html`<span class="text-gray-500 text-xs flex items-center gap-1"><span class="inline-block w-3 h-3 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></span></span>`;
+      } else if (api) {
         if (api.status === 'ok') {
-          apiIndicator = html`<span class="text-green-500 text-xs">✓ API</span>`;
+          apiIndicator = html`<a href=${api.enableUrl || getApiEnableUrl(s.key)} target="_blank" class="text-green-500 hover:text-green-300 text-xs">✓ API</a>`;
         } else if (api.status === 'not_enabled') {
           apiIndicator = html`<a href=${api.enableUrl} target="_blank" class="text-red-400 hover:text-red-300 text-xs underline">Enable API</a>`;
         } else if (api.status === 'error') {

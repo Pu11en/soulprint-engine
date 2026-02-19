@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const httpProxy = require('http-proxy');
+const crypto = require('crypto');
 const { spawn, exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -91,15 +92,52 @@ proxy.on('error', (err, req, res) => {
 
 const app = express();
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Health check for Railway
+const SETUP_PASSWORD = process.env.SETUP_PASSWORD || '';
+const kAuthTokens = new Set();
+const cookieParser = (req) => {
+  const cookies = {};
+  (req.headers.cookie || '').split(';').forEach(c => {
+    const [k, ...v] = c.trim().split('=');
+    if (k) cookies[k] = v.join('=');
+  });
+  return cookies;
+};
+
+// Health check (always public)
 app.get('/health', (req, res) => {
   res.json({
     status: gatewayReady ? 'healthy' : 'starting',
     gateway: gatewayReady ? 'running' : (gatewayExitCode !== null ? `exited(${gatewayExitCode})` : 'starting'),
   });
 });
+
+// Auth: login endpoint
+app.post('/api/auth/login', (req, res) => {
+  if (!SETUP_PASSWORD) return res.json({ ok: true });
+  if (req.body.password !== SETUP_PASSWORD) return res.status(401).json({ ok: false, error: 'Wrong password' });
+  const token = crypto.randomBytes(32).toString('hex');
+  kAuthTokens.add(token);
+  res.cookie('setup_token', token, { httpOnly: true, sameSite: 'lax', path: '/' });
+  res.json({ ok: true });
+});
+
+// Auth middleware: protect setup UI + API when SETUP_PASSWORD is set
+const requireAuth = (req, res, next) => {
+  if (!SETUP_PASSWORD) return next();
+  if (req.path.startsWith('/auth/google/callback')) return next();
+  const cookies = cookieParser(req);
+  const token = cookies.setup_token || req.query.token;
+  if (token && kAuthTokens.has(token)) return next();
+  // For page requests, serve login page; for API, return 401
+  if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Unauthorized' });
+  return res.sendFile(path.join(__dirname, 'public', 'login.html'));
+};
+
+app.use('/setup', requireAuth);
+app.use('/api', requireAuth);
+app.use('/auth', requireAuth);
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Setup page
 app.get('/setup', (req, res) => {
@@ -211,6 +249,9 @@ const SCOPE_MAP = {
   'sheets:read': 'https://www.googleapis.com/auth/spreadsheets.readonly',
   'sheets:write': 'https://www.googleapis.com/auth/spreadsheets',
 };
+const REVERSE_SCOPE_MAP = Object.fromEntries(
+  Object.entries(SCOPE_MAP).map(([k, v]) => [v, k])
+);
 const BASE_SCOPES = ['openid', 'https://www.googleapis.com/auth/userinfo.email'];
 
 // gog uses XDG_CONFIG_HOME/gogcli/ — we point XDG_CONFIG_HOME to OPENCLAW_DIR
@@ -283,7 +324,9 @@ app.get('/api/google/status', async (req, res) => {
     services = activeScopes.map(s => s.split(':')[0]).filter((v, i, a) => a.indexOf(v) === i).join(', ');
   } catch {}
 
-  res.json({ hasCredentials, authenticated, email, services, activeScopes });
+  const status = { hasCredentials, authenticated, email, services, activeScopes };
+  console.log(`[wrapper] Google status: ${JSON.stringify(status)}`);
+  res.json(status);
 });
 
 // API: Save Google OAuth credentials
@@ -309,23 +352,10 @@ app.post('/api/google/credentials', async (req, res) => {
 
     fs.writeFileSync(GOG_CREDENTIALS_PATH, JSON.stringify(credentials, null, 2));
 
-    // Store credentials via gog CLI
+    // Store credentials via gog CLI (gog may rewrite the file to its own flat format — that's fine,
+    // readGoogleCredentials() handles both formats for our OAuth flow)
     const result = await gogCmd(`auth credentials set ${GOG_CREDENTIALS_PATH}`);
     console.log(`[wrapper] gog credentials set: ${JSON.stringify(result)}`);
-
-    // Verify the file is still readable after gog processes it
-    try {
-      const verify = JSON.parse(fs.readFileSync(GOG_CREDENTIALS_PATH, 'utf8'));
-      console.log(`[wrapper] Credentials file after set: ${JSON.stringify(Object.keys(verify))}`);
-      // If gog rewrote the file without web/installed wrapper, re-save our version
-      if (!verify.web && !verify.installed) {
-        console.log('[wrapper] gog rewrote credentials, re-saving with web wrapper');
-        fs.writeFileSync(GOG_CREDENTIALS_PATH, JSON.stringify(credentials, null, 2));
-      }
-    } catch (e) {
-      console.log(`[wrapper] Credentials file unreadable after set, re-saving: ${e.message}`);
-      fs.writeFileSync(GOG_CREDENTIALS_PATH, JSON.stringify(credentials, null, 2));
-    }
 
     // Save UI state (email, selected services — credentials stay in credentials.json)
     const services = req.body.services || ['gmail:read', 'gmail:write', 'calendar:read', 'calendar:write'];
@@ -344,7 +374,7 @@ const API_TEST_COMMANDS = {
   calendar: 'calendar calendars',
   drive: 'drive ls',
   contacts: 'contacts list',
-  sheets: 'sheets list',
+  sheets: 'sheets metadata __api_check__',
 };
 
 app.get('/api/google/check', async (req, res) => {
@@ -363,19 +393,20 @@ app.get('/api/google/check', async (req, res) => {
 
   for (const svc of enabledServices) {
     const cmd = API_TEST_COMMANDS[svc];
-    if (!cmd) { results[svc] = 'unknown'; continue; }
+    if (!cmd) continue;
 
     const result = await gogCmd(`${cmd} --account ${email}`, { quiet: true });
-    if (result.stderr?.includes('has not been used') || result.stderr?.includes('is not enabled')) {
-      // Extract project number for direct enable link
-      const projectMatch = result.stderr.match(/project=(\d+)/);
+    const stderr = result.stderr || '';
+    if (stderr.includes('has not been used') || stderr.includes('is not enabled')) {
+      const projectMatch = stderr.match(/project=(\d+)/);
       results[svc] = {
         status: 'not_enabled',
         enableUrl: getApiEnableUrl(svc, projectMatch?.[1]),
       };
-    } else if (result.ok) {
-      results[svc] = { status: 'ok' };
+    } else if (result.ok || stderr.includes('not found') || stderr.includes('Not Found')) {
+      results[svc] = { status: 'ok', enableUrl: getApiEnableUrl(svc) };
     } else {
+      console.log(`[wrapper] API check ${svc} error: ${result.stderr?.slice(0, 300)}`);
       results[svc] = { status: 'error', message: result.stderr?.slice(0, 200), enableUrl: getApiEnableUrl(svc) };
     }
   }
@@ -422,12 +453,25 @@ app.post('/api/google/disconnect', async (req, res) => {
       }
 
       // Remove from gog keyring
-      await gogCmd(`auth remove ${email}`);
+      await gogCmd(`auth remove ${email} --force`);
     }
 
     // Delete state and credentials
-    try { fs.unlinkSync(GOG_STATE_PATH); } catch {}
-    try { fs.unlinkSync(GOG_CREDENTIALS_PATH); } catch {}
+    for (const f of [GOG_STATE_PATH, GOG_CREDENTIALS_PATH]) {
+      try {
+        fs.unlinkSync(f);
+        console.log(`[wrapper] Deleted ${f}`);
+      } catch (e) {
+        if (e.code !== 'ENOENT') console.error(`[wrapper] Failed to delete ${f}: ${e.message}`);
+      }
+    }
+
+    // Verify files are actually gone
+    const stateStillExists = fs.existsSync(GOG_STATE_PATH);
+    const credsStillExists = fs.existsSync(GOG_CREDENTIALS_PATH);
+    if (stateStillExists || credsStillExists) {
+      console.error(`[wrapper] Files survived deletion! state=${stateStillExists} creds=${credsStillExists}`);
+    }
 
     console.log(`[wrapper] Google disconnected: ${email}`);
     res.json({ ok: true });
@@ -572,15 +616,20 @@ app.get('/auth/google/callback', async (req, res) => {
       try { fs.unlinkSync(tokenFile); } catch {}
     }
 
-    // Decode services from state
+    // Decode requested services from state, then narrow to what was actually granted
     let services = [];
     try {
       const decoded = JSON.parse(Buffer.from(state, 'base64url').toString());
       services = decoded.services || [];
     } catch {}
 
+    const grantedServices = tokens.scope
+      ? tokens.scope.split(' ').map(s => REVERSE_SCOPE_MAP[s]).filter(Boolean)
+      : services;
+    console.log(`[wrapper] Requested: ${services.join(',')} → Granted: ${grantedServices.join(',')}`);
+
     // Update state
-    fs.writeFileSync(GOG_STATE_PATH, JSON.stringify({ email, clientId, clientSecret, services, authenticated: true }));
+    fs.writeFileSync(GOG_STATE_PATH, JSON.stringify({ email, clientId, clientSecret, services: grantedServices, authenticated: true }));
 
     // Close popup and notify parent
     res.send(`<!DOCTYPE html><html><body><script>
