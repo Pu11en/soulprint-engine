@@ -293,9 +293,11 @@
         });
         const data = await res.json();
         if (data.ok) {
+          // Stop auto-refresh before redirecting to avoid race condition
+          clearInterval(refreshInterval);
           closeGoogleModal();
-          // Redirect to Google OAuth
           window.location.href = `/auth/google/start?email=${encodeURIComponent(email)}`;
+          return;
         } else {
           errorEl.textContent = data.error || 'Failed to save credentials';
           errorEl.classList.remove('hidden');
@@ -329,7 +331,7 @@
     }
 
     refresh();
-    setInterval(refresh, 15000);
+    const refreshInterval = setInterval(refresh, 15000);
   </script>
 </body>
 </html>
