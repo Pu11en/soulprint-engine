@@ -28,6 +28,7 @@ function startGateway() {
       OPENCLAW_HOME: '/data',
       OPENCLAW_CONFIG_PATH: `${OPENCLAW_DIR}/openclaw.json`,
       XDG_CONFIG_HOME: OPENCLAW_DIR,
+      GOG_KEYRING_PASSWORD,
     },
     stdio: ['pipe', 'pipe', 'pipe'],
   });
@@ -218,13 +219,15 @@ const GOG_CONFIG_DIR = `${OPENCLAW_DIR}/gogcli`;
 const GOG_CREDENTIALS_PATH = `${GOG_CONFIG_DIR}/credentials.json`;
 const GOG_STATE_PATH = `${GOG_CONFIG_DIR}/state.json`;
 
+const GOG_KEYRING_PASSWORD = process.env.GOG_KEYRING_PASSWORD || 'openclaw-railway';
+
 // Helper: run gog CLI command (config stored on persistent volume)
 function gogCmd(cmd, { quiet = false } = {}) {
   return new Promise((resolve) => {
     if (!quiet) console.log(`[wrapper] Running: gog ${cmd}`);
     exec(`gog ${cmd}`, {
       timeout: 15000,
-      env: { ...process.env, XDG_CONFIG_HOME: `${OPENCLAW_DIR}` },
+      env: { ...process.env, XDG_CONFIG_HOME: OPENCLAW_DIR, GOG_KEYRING_PASSWORD },
     }, (err, stdout, stderr) => {
       const result = { ok: !err, stdout: stdout.trim(), stderr: stderr.trim() };
       if (!quiet && !result.ok) console.log(`[wrapper] gog error: ${result.stderr.slice(0, 200)}`);

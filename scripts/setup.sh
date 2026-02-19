@@ -36,6 +36,7 @@ if ! command -v gog &> /dev/null; then
 fi
 
 # Configure gog keyring to use file backend (no system keyring on Railway)
+export GOG_KEYRING_PASSWORD="${GOG_KEYRING_PASSWORD:-openclaw-railway}"
 GOG_CONFIG_FILE="$OPENCLAW_DIR/gogcli/config.json"
 if [ ! -f "$GOG_CONFIG_FILE" ]; then
   mkdir -p "$OPENCLAW_DIR/gogcli"
