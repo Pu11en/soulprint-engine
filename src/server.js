@@ -424,6 +424,8 @@ app.get('/auth/google/callback', async (req, res) => {
     }
     const redirectUri = `${getBaseUrl(req)}/auth/google/callback`;
 
+    console.log(`[wrapper] Token exchange: clientId=${clientId?.slice(0, 20)}... redirectUri=${redirectUri} hasSecret=${!!clientSecret}`);
+
     // Exchange code for tokens
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
