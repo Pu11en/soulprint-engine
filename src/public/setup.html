@@ -115,10 +115,6 @@
           </details>
         </div>
         <div>
-          <label class="text-sm text-gray-400 block mb-2">Services & permissions</label>
-          <div id="modalScopePicker" class="space-y-2"></div>
-        </div>
-        <div>
           <label class="text-sm text-gray-400 block mb-1">Upload credentials.json</label>
           <input type="file" id="credentialsFile" accept=".json"
             class="w-full text-sm text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-800 file:text-gray-300 hover:file:bg-gray-700" />
@@ -357,7 +353,6 @@
 
     function openGoogleModal() {
       document.getElementById('googleModal').classList.remove('hidden');
-      renderScopePicker('modalScopePicker');
     }
 
     function closeGoogleModal() {
