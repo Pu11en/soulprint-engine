@@ -239,18 +239,25 @@
 
     let lastGoogleScopes = [];
 
+    let googleElSnapshot = '';
+
     function reconfigureGoogle(email) {
       const googleEl = document.getElementById('googleStatus');
+      googleElSnapshot = googleEl.innerHTML;
       googleEl.innerHTML = `
         <div class="space-y-3 py-1">
           <p class="text-sm text-gray-400 text-center">Select permissions and re-authorize:</p>
           <div id="inlineScopePicker" class="space-y-2"></div>
           <div class="text-center space-x-2">
             <button onclick="startGoogleAuth('${email}')" class="bg-white text-black text-sm font-medium px-4 py-2 rounded-lg hover:opacity-85">Update permissions</button>
-            <button onclick="refresh()" class="text-gray-400 text-sm px-3 py-2 hover:text-gray-200">Cancel</button>
+            <button onclick="cancelReconfigure()" class="text-gray-400 text-sm px-3 py-2 hover:text-gray-200">Cancel</button>
           </div>
         </div>`;
       renderScopePicker('inlineScopePicker', lastGoogleScopes);
+    }
+
+    function cancelReconfigure() {
+      document.getElementById('googleStatus').innerHTML = googleElSnapshot;
     }
 
     async function checkGoogleApis() {
