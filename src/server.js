@@ -143,73 +143,41 @@ app.get('/api/gateway-status', async (req, res) => {
 let pairingCache = { pending: [], ts: 0 };
 const PAIRING_CACHE_TTL = 10000; // 10s
 
-// API: list pending pairings across all channels
-app.get('/api/pairings', async (req, res) => {
+// API: list pending pairings — reads files directly (no CLI)
+app.get('/api/pairings', (req, res) => {
   if (Date.now() - pairingCache.ts < PAIRING_CACHE_TTL) {
     return res.json({ pending: pairingCache.pending });
   }
-  console.log('[wrapper] Fetching pending pairings...');
-  const channels = ['telegram', 'discord'];
+
   const pending = [];
+  const credDir = `${OPENCLAW_DIR}/credentials`;
 
-  for (const ch of channels) {
-    // Check if channel is configured
-    try {
-      const config = JSON.parse(fs.readFileSync(`${OPENCLAW_DIR}/openclaw.json`, 'utf8'));
-      if (!config.channels?.[ch]?.enabled) continue;
-    } catch { continue; }
-
-    const result = await clawCmd(`pairing list ${ch}`);
-    console.log(`[wrapper] pairing list ${ch}: ${JSON.stringify(result)}`);
-
-    if (result.ok && result.stdout) {
-      // Parse the CLI text output into structured data
-      // Expected format varies; try to extract code + sender info
-      const lines = result.stdout.split('\n').filter(l => l.trim());
-      for (const line of lines) {
-        // Try to parse lines that contain pairing info
-        const codeMatch = line.match(/([A-Z0-9]{8})/);
-        if (codeMatch) {
-          pending.push({
-            id: codeMatch[1],
-            code: codeMatch[1],
-            channel: ch,
-            displayName: line.replace(codeMatch[1], '').trim() || 'Unknown sender',
-            raw: line,
-          });
-        }
-      }
-    }
-  }
-
-  // Also check credentials dir directly for pairing files
   try {
-    const credDir = `${OPENCLAW_DIR}/credentials`;
     if (fs.existsSync(credDir)) {
       const files = fs.readdirSync(credDir).filter(f => f.endsWith('-pairing.json'));
-      console.log(`[wrapper] Pairing files found: ${files.join(', ') || 'none'}`);
       for (const file of files) {
         try {
-          const data = JSON.parse(fs.readFileSync(`${credDir}/${file}`, 'utf8'));
+          const raw = fs.readFileSync(`${credDir}/${file}`, 'utf8');
+          const data = JSON.parse(raw);
           const ch = file.replace('-pairing.json', '');
-          console.log(`[wrapper] ${file} contents: ${JSON.stringify(data).slice(0, 500)}`);
-          // If it's an array or object with pending entries
-          const entries = Array.isArray(data) ? data : Object.values(data);
+
+          // Handle both array and object formats
+          const entries = Array.isArray(data) ? data : Object.values(data).flat();
           for (const entry of entries) {
-            if (entry.code || entry.pairingCode) {
-              const code = entry.code || entry.pairingCode;
-              // Skip if already found via CLI
-              if (!pending.find(p => p.code === code)) {
-                pending.push({
-                  id: code,
-                  code,
-                  channel: ch,
-                  displayName: entry.displayName || entry.name || entry.sender || entry.senderId || 'Unknown',
-                  sender: entry.senderId || entry.sender,
-                  raw: JSON.stringify(entry),
-                });
-              }
-            }
+            if (!entry || typeof entry !== 'object') continue;
+            const code = entry.code || entry.pairingCode || entry.id;
+            if (!code) continue;
+
+            // Skip expired (1 hour TTL)
+            if (entry.createdAt && Date.now() - new Date(entry.createdAt).getTime() > 3600000) continue;
+
+            pending.push({
+              id: code,
+              code,
+              channel: ch,
+              displayName: entry.displayName || entry.name || entry.firstName || entry.sender || entry.senderId || 'Unknown',
+              sender: entry.senderId || entry.sender || entry.chatId,
+            });
           }
         } catch (e) {
           console.log(`[wrapper] Error reading ${file}: ${e.message}`);
@@ -220,7 +188,9 @@ app.get('/api/pairings', async (req, res) => {
     console.log(`[wrapper] Error checking credentials: ${e.message}`);
   }
 
-  console.log(`[wrapper] Total pending pairings: ${pending.length}`);
+  if (pending.length > 0) {
+    console.log(`[wrapper] Found ${pending.length} pending pairing(s)`);
+  }
   pairingCache = { pending, ts: Date.now() };
   res.json({ pending });
 });
