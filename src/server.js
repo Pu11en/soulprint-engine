@@ -201,15 +201,14 @@ app.post('/api/pairings/:id/reject', async (req, res) => {
 // Google OAuth flow
 // ============================================================
 
-const GOG_SCOPES = [
-  'openid',
-  'https://www.googleapis.com/auth/userinfo.email',
-  'https://www.googleapis.com/auth/gmail.modify',
-  'https://www.googleapis.com/auth/calendar',
-  'https://www.googleapis.com/auth/drive',
-  'https://www.googleapis.com/auth/contacts',
-  'https://www.googleapis.com/auth/spreadsheets',
-].join(' ');
+const SCOPE_MAP = {
+  gmail: 'https://www.googleapis.com/auth/gmail.modify',
+  calendar: 'https://www.googleapis.com/auth/calendar',
+  drive: 'https://www.googleapis.com/auth/drive',
+  contacts: 'https://www.googleapis.com/auth/contacts',
+  sheets: 'https://www.googleapis.com/auth/spreadsheets',
+};
+const BASE_SCOPES = ['openid', 'https://www.googleapis.com/auth/userinfo.email'];
 
 // gog uses XDG_CONFIG_HOME/gogcli/ — we point XDG_CONFIG_HOME to OPENCLAW_DIR
 // so gog config lives at /data/.openclaw/gogcli/ (persistent + gitignored)
@@ -254,7 +253,13 @@ app.get('/api/google/status', async (req, res) => {
     }
   }
 
-  res.json({ hasCredentials, authenticated, email });
+  let services = '';
+  try {
+    const stateData = JSON.parse(fs.readFileSync(GOG_STATE_PATH, 'utf8'));
+    services = (stateData.services || []).join(', ');
+  } catch {}
+
+  res.json({ hasCredentials, authenticated, email, services });
 });
 
 // API: Save Google OAuth credentials
@@ -299,7 +304,8 @@ app.post('/api/google/credentials', async (req, res) => {
     }
 
     // Save state (includes credentials as fallback for OAuth flow)
-    fs.writeFileSync(GOG_STATE_PATH, JSON.stringify({ email, clientId, clientSecret }));
+    const services = req.body.services || ['gmail', 'calendar'];
+    fs.writeFileSync(GOG_STATE_PATH, JSON.stringify({ email, clientId, clientSecret, services }));
 
     res.json({ ok: true });
   } catch (err) {
@@ -311,6 +317,7 @@ app.post('/api/google/credentials', async (req, res) => {
 // OAuth: Start Google auth flow
 app.get('/auth/google/start', (req, res) => {
   const email = req.query.email || '';
+  const services = (req.query.services || 'gmail,calendar').split(',').filter(Boolean);
 
   try {
     // Read credentials — try credentials.json first, fall back to state file
@@ -320,19 +327,22 @@ app.get('/auth/google/start', (req, res) => {
       clientId = creds.web?.client_id || creds.installed?.client_id;
     } catch {}
     if (!clientId) {
-      const state = JSON.parse(fs.readFileSync(GOG_STATE_PATH, 'utf8'));
-      clientId = state.clientId;
+      const stateData = JSON.parse(fs.readFileSync(GOG_STATE_PATH, 'utf8'));
+      clientId = stateData.clientId;
     }
     if (!clientId) throw new Error('No client_id found');
 
+    // Build scopes from selected services
+    const scopes = [...BASE_SCOPES, ...services.map(s => SCOPE_MAP[s]).filter(Boolean)].join(' ');
+
     const redirectUri = `${getBaseUrl(req)}/auth/google/callback`;
-    const state = Buffer.from(JSON.stringify({ email })).toString('base64url');
+    const state = Buffer.from(JSON.stringify({ email, services })).toString('base64url');
 
     const authUrl = new URL('https://accounts.google.com/o/oauth2/auth');
     authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', redirectUri);
     authUrl.searchParams.set('response_type', 'code');
-    authUrl.searchParams.set('scope', GOG_SCOPES);
+    authUrl.searchParams.set('scope', scopes);
     authUrl.searchParams.set('access_type', 'offline');
     authUrl.searchParams.set('prompt', 'consent');
     authUrl.searchParams.set('state', state);

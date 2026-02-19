@@ -82,17 +82,57 @@
           </p>
           <details class="text-xs text-gray-500 mb-3">
             <summary class="cursor-pointer hover:text-gray-300">Step-by-step instructions</summary>
-            <ol class="list-decimal list-inside space-y-1.5 mt-2 ml-1">
-              <li><a href="https://console.cloud.google.com/projectcreate" target="_blank" class="text-blue-400 hover:text-blue-300">Create a Google Cloud project</a> (or use an existing one)</li>
-              <li>Go to <a href="https://console.cloud.google.com/apis/credentials/consent" target="_blank" class="text-blue-400 hover:text-blue-300">OAuth consent screen</a> → set to <strong>External</strong>, fill in app name and email</li>
-              <li>Under <strong>Test users</strong>, add your own email address</li>
-              <li><a href="https://console.cloud.google.com/apis/library" target="_blank" class="text-blue-400 hover:text-blue-300">Enable APIs</a>: Gmail, Calendar, Drive, Contacts, Sheets</li>
-              <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="text-blue-400 hover:text-blue-300">Credentials</a> → Create OAuth 2.0 Client ID (Web application)</li>
-              <li>Add authorized redirect URI: <code id="redirectUri" class="bg-black/40 px-1 rounded text-gray-400"></code></li>
-              <li>Download the credentials JSON or copy Client ID + Secret</li>
-            </ol>
-            <p class="mt-2 text-yellow-500/80">⚠️ Your app will be in "Testing" mode. Only emails listed as Test Users can sign in. You can add up to 100 test users without needing Google verification.</p>
+
+            <div class="mt-2 mb-2 flex gap-2">
+              <button onclick="showInstructions('workspace')" id="btnWorkspace" class="px-2 py-1 rounded bg-gray-800 text-gray-400 hover:text-gray-200 text-xs">Google Workspace</button>
+              <button onclick="showInstructions('personal')" id="btnPersonal" class="px-2 py-1 rounded bg-gray-700 text-gray-200 text-xs">Personal Gmail</button>
+            </div>
+
+            <div id="instructionsPersonal">
+              <ol class="list-decimal list-inside space-y-1.5 ml-1">
+                <li><a href="https://console.cloud.google.com/projectcreate" target="_blank" class="text-blue-400 hover:text-blue-300">Create a Google Cloud project</a> (or use existing)</li>
+                <li>Go to <a href="https://console.cloud.google.com/auth/audience" target="_blank" class="text-blue-400 hover:text-blue-300">OAuth consent screen</a> → set to <strong>External</strong></li>
+                <li>Under <a href="https://console.cloud.google.com/auth/audience" target="_blank" class="text-blue-400 hover:text-blue-300">Test users</a>, <strong>add your own email</strong></li>
+                <li><a href="https://console.cloud.google.com/apis/library" target="_blank" class="text-blue-400 hover:text-blue-300">Enable APIs</a> for the services you selected below</li>
+                <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="text-blue-400 hover:text-blue-300">Credentials</a> → Create OAuth 2.0 Client ID (Web application)</li>
+                <li>Add redirect URI: <code id="redirectUri" class="bg-black/40 px-1 rounded text-gray-400"></code></li>
+                <li>Copy Client ID + Secret (or download credentials JSON)</li>
+              </ol>
+              <p class="mt-2 text-yellow-500/80">⚠️ App will be in "Testing" mode. Only emails added as Test Users can sign in (up to 100).</p>
+            </div>
+
+            <div id="instructionsWorkspace" class="hidden">
+              <ol class="list-decimal list-inside space-y-1.5 ml-1">
+                <li><a href="https://console.cloud.google.com/projectcreate" target="_blank" class="text-blue-400 hover:text-blue-300">Create a Google Cloud project</a> (or use existing)</li>
+                <li>Go to <a href="https://console.cloud.google.com/auth/audience" target="_blank" class="text-blue-400 hover:text-blue-300">OAuth consent screen</a> → set to <strong>Internal</strong> (Workspace only)</li>
+                <li><a href="https://console.cloud.google.com/apis/library" target="_blank" class="text-blue-400 hover:text-blue-300">Enable APIs</a> for the services you selected below</li>
+                <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="text-blue-400 hover:text-blue-300">Credentials</a> → Create OAuth 2.0 Client ID (Web application)</li>
+                <li>Add redirect URI: <code id="redirectUriWs" class="bg-black/40 px-1 rounded text-gray-400"></code></li>
+                <li>Copy Client ID + Secret (or download credentials JSON)</li>
+              </ol>
+              <p class="mt-2 text-green-500/80">✓ Internal apps skip test users and verification. Any user in your org can sign in.</p>
+            </div>
           </details>
+        </div>
+        <div>
+          <label class="text-sm text-gray-400 block mb-2">Services to connect</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" id="svc-gmail" checked class="rounded"> Gmail
+            </label>
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" id="svc-calendar" checked class="rounded"> Calendar
+            </label>
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" id="svc-drive" class="rounded"> Drive
+            </label>
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" id="svc-contacts" class="rounded"> Contacts
+            </label>
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" id="svc-sheets" class="rounded"> Sheets
+            </label>
+          </div>
         </div>
         <div>
           <label class="text-sm text-gray-400 block mb-1">Upload credentials.json</label>
@@ -131,8 +171,27 @@
   </div>
 
   <script>
-    // Populate redirect URI
-    document.getElementById('redirectUri').textContent = `${window.location.origin}/auth/google/callback`;
+    // Populate redirect URIs
+    const redirectUri = `${window.location.origin}/auth/google/callback`;
+    document.getElementById('redirectUri').textContent = redirectUri;
+    document.getElementById('redirectUriWs').textContent = redirectUri;
+
+    function showInstructions(type) {
+      document.getElementById('instructionsPersonal').classList.toggle('hidden', type !== 'personal');
+      document.getElementById('instructionsWorkspace').classList.toggle('hidden', type !== 'workspace');
+      document.getElementById('btnPersonal').className = `px-2 py-1 rounded text-xs ${type === 'personal' ? 'bg-gray-700 text-gray-200' : 'bg-gray-800 text-gray-400 hover:text-gray-200'}`;
+      document.getElementById('btnWorkspace').className = `px-2 py-1 rounded text-xs ${type === 'workspace' ? 'bg-gray-700 text-gray-200' : 'bg-gray-800 text-gray-400 hover:text-gray-200'}`;
+    }
+
+    function getSelectedServices() {
+      const services = [];
+      if (document.getElementById('svc-gmail').checked) services.push('gmail');
+      if (document.getElementById('svc-calendar').checked) services.push('calendar');
+      if (document.getElementById('svc-drive').checked) services.push('drive');
+      if (document.getElementById('svc-contacts').checked) services.push('contacts');
+      if (document.getElementById('svc-sheets').checked) services.push('sheets');
+      return services;
+    }
 
     async function refresh() {
       try {
@@ -278,9 +337,15 @@
       const clientId = document.getElementById('clientId').value.trim();
       const clientSecret = document.getElementById('clientSecret').value.trim();
       const email = document.getElementById('googleEmail').value.trim();
+      const services = getSelectedServices();
 
       if (!clientId || !clientSecret || !email) {
         errorEl.textContent = 'All fields required';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      if (services.length === 0) {
+        errorEl.textContent = 'Select at least one service';
         errorEl.classList.remove('hidden');
         return;
       }
@@ -292,14 +357,14 @@
         const res = await fetch('/api/google/credentials', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ clientId, clientSecret, email }),
+          body: JSON.stringify({ clientId, clientSecret, email, services }),
         });
         const data = await res.json();
         if (data.ok) {
           // Stop auto-refresh before redirecting to avoid race condition
           clearInterval(refreshInterval);
           closeGoogleModal();
-          window.location.href = `/auth/google/start?email=${encodeURIComponent(email)}`;
+          window.location.href = `/auth/google/start?email=${encodeURIComponent(email)}&services=${services.join(',')}`;
           return;
         } else {
           errorEl.textContent = data.error || 'Failed to save credentials';
