@@ -414,20 +414,19 @@ app.get('/auth/google/callback', async (req, res) => {
       email = decoded.email || '';
     } catch {}
 
-    // Read credentials from state file (reliable source) with credentials.json fallback
+    // Read credentials from all sources
     let clientId, clientSecret;
+    // Source 1: state file
     try {
-      const stateData = JSON.parse(fs.readFileSync(GOG_STATE_PATH, 'utf8'));
-      clientId = stateData.clientId;
-      clientSecret = stateData.clientSecret;
+      const s = JSON.parse(fs.readFileSync(GOG_STATE_PATH, 'utf8'));
+      clientId = s.clientId; clientSecret = s.clientSecret;
     } catch {}
-    if (!clientId || !clientSecret) {
-      try {
-        const creds = JSON.parse(fs.readFileSync(GOG_CREDENTIALS_PATH, 'utf8'));
-        clientId = clientId || creds.web?.client_id || creds.installed?.client_id;
-        clientSecret = clientSecret || creds.web?.client_secret || creds.installed?.client_secret;
-      } catch {}
-    }
+    // Source 2: credentials.json (may have web/installed wrapper, or flat)
+    try {
+      const c = JSON.parse(fs.readFileSync(GOG_CREDENTIALS_PATH, 'utf8'));
+      clientId = clientId || c.web?.client_id || c.installed?.client_id || c.client_id;
+      clientSecret = clientSecret || c.web?.client_secret || c.installed?.client_secret || c.client_secret;
+    } catch {}
     const redirectUri = `${getBaseUrl(req)}/auth/google/callback`;
 
     console.log(`[wrapper] Token exchange: clientId=${clientId?.slice(0, 20)}... redirectUri=${redirectUri} hasSecret=${!!clientSecret}`);
