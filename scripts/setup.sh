@@ -185,8 +185,8 @@ if [ ! -f "$OPENCLAW_CONFIG_PATH" ]; then
       cfg.channels.discord = {
         enabled: true,
         token: process.env.DISCORD_BOT_TOKEN,
+        dmPolicy: 'pairing',
         groupPolicy: 'allowlist',
-        dm: { policy: 'pairing' },
       };
       if (!cfg.plugins) cfg.plugins = {};
       if (!cfg.plugins.entries) cfg.plugins.entries = {};
@@ -245,6 +245,70 @@ if [ ! -f "$OPENCLAW_CONFIG_PATH" ]; then
 
 else
   echo "Config exists, skipping onboard"
+
+  # ============================================================
+  # Reconcile channels: pick up new/changed env vars on every boot
+  # ============================================================
+  echo "Reconciling channel config..."
+  node -e "
+    const fs = require('fs');
+    const configPath = process.env.OPENCLAW_CONFIG_PATH;
+    const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    if (!cfg.channels) cfg.channels = {};
+    if (!cfg.plugins) cfg.plugins = {};
+    if (!cfg.plugins.entries) cfg.plugins.entries = {};
+    let changed = false;
+
+    if (process.env.TELEGRAM_BOT_TOKEN && !cfg.channels.telegram) {
+      cfg.channels.telegram = {
+        enabled: true,
+        botToken: process.env.TELEGRAM_BOT_TOKEN,
+        dmPolicy: 'pairing',
+        groupPolicy: 'allowlist',
+      };
+      cfg.plugins.entries.telegram = { enabled: true };
+      console.log('✓ Telegram added');
+      changed = true;
+    }
+
+    if (process.env.DISCORD_BOT_TOKEN && !cfg.channels.discord) {
+      cfg.channels.discord = {
+        enabled: true,
+        token: process.env.DISCORD_BOT_TOKEN,
+        dmPolicy: 'pairing',
+        groupPolicy: 'allowlist',
+      };
+      cfg.plugins.entries.discord = { enabled: true };
+      console.log('✓ Discord added');
+      changed = true;
+    }
+
+    if (changed) {
+      let content = JSON.stringify(cfg, null, 2);
+
+      // Sanitize new secrets
+      const replacements = [
+        [process.env.OPENCLAW_GATEWAY_TOKEN, '\${OPENCLAW_GATEWAY_TOKEN}'],
+        [process.env.ANTHROPIC_API_KEY, '\${ANTHROPIC_API_KEY}'],
+        [process.env.ANTHROPIC_TOKEN, '\${ANTHROPIC_TOKEN}'],
+        [process.env.TELEGRAM_BOT_TOKEN, '\${TELEGRAM_BOT_TOKEN}'],
+        [process.env.DISCORD_BOT_TOKEN, '\${DISCORD_BOT_TOKEN}'],
+        [process.env.OPENAI_API_KEY, '\${OPENAI_API_KEY}'],
+        [process.env.GEMINI_API_KEY, '\${GEMINI_API_KEY}'],
+        [process.env.NOTION_API_KEY, '\${NOTION_API_KEY}'],
+        [process.env.BRAVE_API_KEY, '\${BRAVE_API_KEY}'],
+      ];
+
+      for (const [secret, envRef] of replacements) {
+        if (secret && secret.length > 8) {
+          content = content.split(secret).join(envRef);
+        }
+      }
+
+      fs.writeFileSync(configPath, content);
+      console.log('✓ Config updated and sanitized');
+    }
+  "
 fi
 
 echo "✓ Setup complete — starting wrapper"

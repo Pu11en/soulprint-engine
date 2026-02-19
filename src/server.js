@@ -22,6 +22,10 @@ let gatewayReady = false;
 let gatewayExitCode = null;
 
 function startGateway() {
+  // Clean up stale lock/pid files from previous runs
+  for (const f of ['gateway.lock', 'gateway.pid']) {
+    try { fs.unlinkSync(`${OPENCLAW_DIR}/${f}`); } catch {}
+  }
   console.log('[wrapper] Starting openclaw gateway...');
   gatewayProcess = spawn('openclaw', ['gateway', 'run'], {
     env: {
@@ -660,10 +664,9 @@ function getChannelStatus() {
     for (const ch of ['telegram', 'discord']) {
       if (!config.channels?.[ch]?.enabled) continue;
 
-      // Check for paired users
+      // Check for paired users (credential files + inline allowFrom in config)
       let paired = 0;
       try {
-        // Check all allowFrom files for this channel (e.g. telegram-default-allowFrom.json)
         const files = fs.readdirSync(credDir).filter(f =>
           f.startsWith(`${ch}-`) && f.endsWith('-allowFrom.json')
         );
@@ -672,6 +675,9 @@ function getChannelStatus() {
           paired += (data.allowFrom || []).length;
         }
       } catch {}
+      // Also check allowFrom in openclaw.json (gateway writes pairing approvals here)
+      const inlineAllowFrom = config.channels[ch]?.allowFrom;
+      if (Array.isArray(inlineAllowFrom)) paired += inlineAllowFrom.length;
 
       channels[ch] = { status: paired > 0 ? 'paired' : 'configured', paired };
     }
