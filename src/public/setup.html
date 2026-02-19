@@ -233,6 +233,32 @@
       `).join('');
     }
 
+    function reconfigureGoogle(email) {
+      // Switch to the "has credentials" view with scope picker
+      const googleEl = document.getElementById('googleStatus');
+      googleEl.innerHTML = `
+        <div class="space-y-3 py-1">
+          <p class="text-sm text-gray-400 text-center">Select permissions and re-authorize:</p>
+          <div id="inlineScopePicker" class="space-y-2"></div>
+          <div class="text-center space-x-2">
+            <button onclick="startGoogleAuth('${email}')" class="bg-white text-black text-sm font-medium px-4 py-2 rounded-lg hover:opacity-85">Update permissions</button>
+            <button onclick="refresh()" class="text-gray-400 text-sm px-3 py-2 hover:text-gray-200">Cancel</button>
+          </div>
+        </div>`;
+      renderScopePicker('inlineScopePicker');
+    }
+
+    async function disconnectGoogle() {
+      if (!confirm('Disconnect Google account? Your agent will lose access to Gmail, Calendar, etc.')) return;
+      const res = await fetch('/api/google/disconnect', { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) {
+        refresh();
+      } else {
+        alert('Failed to disconnect: ' + (data.error || 'unknown'));
+      }
+    }
+
     function startGoogleAuth(email) {
       const scopes = getSelectedScopes();
       console.log('Selected scopes:', scopes);
@@ -312,12 +338,18 @@
 
         if (google.authenticated) {
           googleEl.innerHTML = `
-            <div class="flex justify-between items-center">
-              <div>
-                <div class="text-sm font-medium">${google.email || 'Connected'}</div>
-                <div class="text-xs text-gray-500">${google.services || 'Gmail, Calendar, Drive'}</div>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <div>
+                  <div class="text-sm font-medium">${google.email || 'Connected'}</div>
+                  <div class="text-xs text-gray-500">${google.services || 'Gmail, Calendar'}</div>
+                </div>
+                <span class="text-xs px-2 py-0.5 rounded-full font-medium bg-green-500/10 text-green-500">Connected</span>
               </div>
-              <span class="text-xs px-2 py-0.5 rounded-full font-medium bg-green-500/10 text-green-500">Connected</span>
+              <div class="flex gap-2">
+                <button onclick="reconfigureGoogle('${google.email || ''}')" class="text-xs text-gray-400 hover:text-gray-200 underline">Change permissions</button>
+                <button onclick="disconnectGoogle()" class="text-xs text-red-400/60 hover:text-red-400 underline">Disconnect</button>
+              </div>
             </div>`;
         } else if (google.hasCredentials) {
           googleEl.innerHTML = `

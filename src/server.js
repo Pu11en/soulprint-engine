@@ -319,6 +319,36 @@ app.post('/api/google/credentials', async (req, res) => {
   }
 });
 
+// API: Disconnect Google account
+app.post('/api/google/disconnect', async (req, res) => {
+  try {
+    // Read state to get email
+    let email = '';
+    try {
+      const stateData = JSON.parse(fs.readFileSync(GOG_STATE_PATH, 'utf8'));
+      email = stateData.email || '';
+    } catch {}
+
+    // Revoke via gog CLI
+    if (email) {
+      await gogCmd(`auth remove ${email}`);
+    }
+
+    // Clear state
+    try {
+      const stateData = JSON.parse(fs.readFileSync(GOG_STATE_PATH, 'utf8'));
+      stateData.authenticated = false;
+      fs.writeFileSync(GOG_STATE_PATH, JSON.stringify(stateData));
+    } catch {}
+
+    console.log(`[wrapper] Google disconnected: ${email}`);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[wrapper] Google disconnect error:', err);
+    res.json({ ok: false, error: err.message });
+  }
+});
+
 // OAuth: Start Google auth flow
 app.get('/auth/google/start', (req, res) => {
   const email = req.query.email || '';
