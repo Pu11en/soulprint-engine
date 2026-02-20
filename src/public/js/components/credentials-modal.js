@@ -100,6 +100,7 @@ export const CredentialsModal = ({ visible, onClose, onSaved }) => {
                   <div>
                     <ol class="list-decimal list-inside space-y-1.5 ml-1">
                       <li>
+                        ${" "}
                         <a
                           href="https://console.cloud.google.com/projectcreate"
                           target="_blank"
@@ -109,7 +110,7 @@ export const CredentialsModal = ({ visible, onClose, onSaved }) => {
                         (or use existing)
                       </li>
                       <li>
-                        Go to
+                        Go to${" "}
                         <a
                           href="https://console.cloud.google.com/auth/audience"
                           target="_blank"
@@ -119,7 +120,7 @@ export const CredentialsModal = ({ visible, onClose, onSaved }) => {
                         → set to <strong>External</strong>
                       </li>
                       <li>
-                        Under
+                        Under${" "}
                         <a
                           href="https://console.cloud.google.com/auth/audience"
                           target="_blank"
@@ -128,6 +129,7 @@ export const CredentialsModal = ({ visible, onClose, onSaved }) => {
                         >, <strong>add your own email</strong>
                       </li>
                       <li>
+                        ${" "}
                         <a
                           href="https://console.cloud.google.com/apis/library"
                           target="_blank"
@@ -137,7 +139,7 @@ export const CredentialsModal = ({ visible, onClose, onSaved }) => {
                         for the services you selected below
                       </li>
                       <li>
-                        Go to
+                        Go to${" "}
                         <a
                           href="https://console.cloud.google.com/apis/credentials"
                           target="_blank"
@@ -166,6 +168,7 @@ export const CredentialsModal = ({ visible, onClose, onSaved }) => {
                   <div>
                     <ol class="list-decimal list-inside space-y-1.5 ml-1">
                       <li>
+                        ${" "}
                         <a
                           href="https://console.cloud.google.com/projectcreate"
                           target="_blank"
@@ -175,7 +178,7 @@ export const CredentialsModal = ({ visible, onClose, onSaved }) => {
                         (or use existing)
                       </li>
                       <li>
-                        Go to
+                        Go to${" "}
                         <a
                           href="https://console.cloud.google.com/auth/audience"
                           target="_blank"
@@ -185,6 +188,7 @@ export const CredentialsModal = ({ visible, onClose, onSaved }) => {
                         → set to <strong>Internal</strong> (Workspace only)
                       </li>
                       <li>
+                        ${" "}
                         <a
                           href="https://console.cloud.google.com/apis/library"
                           target="_blank"
@@ -194,7 +198,7 @@ export const CredentialsModal = ({ visible, onClose, onSaved }) => {
                         for the services you selected below
                       </li>
                       <li>
-                        Go to
+                        Go to${" "}
                         <a
                           href="https://console.cloud.google.com/apis/credentials"
                           target="_blank"

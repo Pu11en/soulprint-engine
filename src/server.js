@@ -1646,7 +1646,9 @@ app.post("/api/google/credentials", async (req, res) => {
       "gmail:write",
       "calendar:read",
       "calendar:write",
-      "tasks:read",
+      "drive:read",
+      "sheets:read",
+      "docs:read",
     ];
     fs.writeFileSync(GOG_STATE_PATH, JSON.stringify({ email, services }));
 
@@ -1807,7 +1809,7 @@ app.get("/auth/google/start", (req, res) => {
   const email = req.query.email || "";
   const services = (
     req.query.services ||
-    "gmail:read,gmail:write,calendar:read,calendar:write,tasks:read"
+    "gmail:read,gmail:write,calendar:read,calendar:write,drive:read,sheets:read,docs:read"
   )
     .split(",")
     .filter(Boolean);

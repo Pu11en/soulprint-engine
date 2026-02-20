@@ -164,16 +164,25 @@ export function Google() {
                 loading=${isAuthed && checkingApis}
               />
               <div class="flex justify-between items-center pt-1">
-                <button
-                  onclick=${() => startAuth(email)}
-                  disabled=${isAuthed && !scopesChanged}
-                  class="text-sm font-medium px-4 py-2 rounded-lg ${isAuthed &&
-                  !scopesChanged
-                    ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-black hover:opacity-85"}"
-                >
-                  ${isAuthed ? "Update Permissions" : "Sign in with Google"}
-                </button>
+                <div class="flex items-center gap-2">
+                  <button
+                    onclick=${() => startAuth(email)}
+                    disabled=${isAuthed && !scopesChanged}
+                    class="text-sm font-medium px-4 py-2 rounded-lg ${isAuthed &&
+                    !scopesChanged
+                      ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                      : "bg-white text-black hover:opacity-85"}"
+                  >
+                    ${isAuthed ? "Update Permissions" : "Sign in with Google"}
+                  </button>
+                  <button
+                    type="button"
+                    onclick=${() => setModalOpen(true)}
+                    class="text-xs font-medium px-3 py-2 rounded-lg border border-border text-gray-300 hover:border-gray-500"
+                  >
+                    Edit credentials
+                  </button>
+                </div>
                 <button
                   onclick=${handleDisconnect}
                   class="text-xs text-red-400/60 hover:text-red-400"
