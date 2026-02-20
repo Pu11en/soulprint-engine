@@ -12,7 +12,6 @@ export const SERVICES = [
   { key: 'tasks', icon: '✅', label: 'Tasks', defaultRead: true, defaultWrite: false },
   { key: 'contacts', icon: '👤', label: 'Contacts', defaultRead: true, defaultWrite: false },
   { key: 'meet', icon: '🎥', label: 'Meet', defaultRead: false, defaultWrite: false },
-  { key: 'keep', icon: '📌', label: 'Keep', defaultRead: false, defaultWrite: false },
 ];
 
 const API_ENABLE_URLS = {
@@ -24,7 +23,6 @@ const API_ENABLE_URLS = {
   sheets: 'sheets.googleapis.com',
   docs: 'docs.googleapis.com',
   meet: 'meet.googleapis.com',
-  keep: 'keep.googleapis.com',
 };
 
 function getApiEnableUrl(svc) {

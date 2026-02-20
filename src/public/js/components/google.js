@@ -124,7 +124,10 @@ export function Google() {
   const hasCredentials = google.authenticated || google.hasCredentials;
   const isAuthed = google.authenticated;
   const email = google.email || "";
-  const scopesChanged = !savedScopes || scopes.length !== savedScopes.length || scopes.some(s => !savedScopes.includes(s));
+  const scopesChanged =
+    !savedScopes ||
+    scopes.length !== savedScopes.length ||
+    scopes.some((s) => !savedScopes.includes(s));
 
   return html`
     <div class="bg-surface border border-border rounded-xl p-4">
@@ -135,12 +138,24 @@ export function Google() {
               <div class="flex justify-between items-center">
                 <div class="text-sm font-medium">${email}</div>
                 ${isAuthed
-                  ? html`<span class="text-xs px-2 py-0.5 rounded-full font-medium bg-green-500/10 text-green-500">Connected</span>`
-                  : html`<span class="text-xs px-2 py-0.5 rounded-full font-medium bg-yellow-500/10 text-yellow-500">Awaiting sign-in</span>`}
+                  ? html`<span
+                      class="text-xs px-2 py-0.5 rounded-full font-medium bg-green-500/10 text-green-500"
+                      >Connected</span
+                    >`
+                  : html`<span
+                      class="text-xs px-2 py-0.5 rounded-full font-medium bg-yellow-500/10 text-yellow-500"
+                      >Awaiting sign-in</span
+                    >`}
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-400">Select permissions</span>
-                ${isAuthed && html`<button onclick=${handleCheckApis} class="text-xs text-gray-500 hover:text-gray-300">↻ Check APIs</button>`}
+                ${isAuthed &&
+                html`<button
+                  onclick=${handleCheckApis}
+                  class="text-xs text-gray-500 hover:text-gray-300"
+                >
+                  ↻ Check APIs
+                </button>`}
               </div>
               <${ScopePicker}
                 scopes=${scopes}
@@ -152,7 +167,10 @@ export function Google() {
                 <button
                   onclick=${() => startAuth(email)}
                   disabled=${isAuthed && !scopesChanged}
-                  class="text-sm font-medium px-4 py-2 rounded-lg ${isAuthed && !scopesChanged ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-white text-black hover:opacity-85'}"
+                  class="text-sm font-medium px-4 py-2 rounded-lg ${isAuthed &&
+                  !scopesChanged
+                    ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-black hover:opacity-85"}"
                 >
                   ${isAuthed ? "Update Permissions" : "Sign in with Google"}
                 </button>
@@ -168,7 +186,8 @@ export function Google() {
         : html`
             <div class="text-center space-y-2 py-1">
               <p class="text-xs text-gray-500">
-                Connect Gmail, Calendar, Contacts, Drive, Sheets, Tasks, Docs, Meet, and Keep.
+                Connect Gmail, Calendar, Contacts, Drive, Sheets, Tasks, Docs,
+                and Meet.
               </p>
               <button
                 onclick=${() => setModalOpen(true)}
