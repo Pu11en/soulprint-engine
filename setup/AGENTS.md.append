@@ -17,8 +17,20 @@ When you say that you've done something, please let me know what changes you've 
 After making changes, end your message with a **Resources changed** summary:
 
 ```
+Commit: owner/repo@abc123
 Resources changed:
 • path/or/resource (new|edit|delete) — brief description
 ```
 
-Include all internal resources (files, config, cron jobs, skills) and external resources (third-party pages, databases, integrations) that were created, modified, or removed. Skip GitHub activities.
+Include all internal resources (files, config, cron jobs, skills) and external resources (third-party pages, databases, integrations) that were created, modified, or removed.
+
+## Git Workflow
+
+Commit and push after every change. Don't wait.
+Never force push.
+After pushing, include a link to the commit using the abbreviated hash: `[abc1234](https://github.com/owner/repo/commit/abc1234)` format.
+
+## Telegram Formatting
+
+- **Links:** Use markdown syntax `[text](URL)` — HTML `<a href>` does NOT render
+- **Bold/italic:** Standard markdown (`*bold*`, `_italic_`)
