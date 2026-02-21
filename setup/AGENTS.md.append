@@ -17,9 +17,9 @@ When you say that you've done something, please let me know what changes you've 
 After making changes, end your message with a **Resources changed** summary:
 
 ```
-Commit: owner/repo@abc123
 Resources changed:
 • path/or/resource (new|edit|delete) — brief description
+Commit: [commit url]
 ```
 
 Include all internal resources (files, config, cron jobs, skills) and external resources (third-party pages, databases, integrations) that were created, modified, or removed.

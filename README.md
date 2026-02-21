@@ -53,6 +53,8 @@ Each field includes instructions and links for how to get the value. Optional fi
 
 > **Model catalog note:** Models are discovered at runtime via `openclaw models list --all --json`. This keeps the setup UI aligned with the OpenClaw version installed in your deployment.
 >
+> **Versioning note:** Template builds intentionally install `openclaw@latest` during Docker build, so new Railway deploys pick up the newest OpenClaw release automatically.
+>
 > **Codex OAuth note:** OpenClaw onboarding runs in non-interactive mode here. For OAuth-only Codex setups, the wrapper uses `--auth-choice skip` and then applies your selected `openai-codex/*` model after onboarding.
 
 Click **Complete Setup** — the server runs onboarding, configures channels, and pushes an initial commit to your GitHub repo. This takes 10–15 seconds.

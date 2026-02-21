@@ -1,64 +1,70 @@
 ---
 name: control-ui
-description: Manage environment variables, restart the gateway, and configure Google Workspace via the web-based Setup UI.
+description: Know when and how to direct the user to the Setup UI for configuration tasks.
 ---
 
 # Control UI
 
-You have a web-based control UI running at `{{BASE_URL}}/setup`. Use it to manage your runtime environment.
+There is a web-based Setup UI at `{{BASE_URL}}`. The **user** manages runtime configuration through it. You should NOT call these API endpoints yourself or write config files directly — instead, tell the user what they need to do and where to do it.
 
-## Environment Variables
+## When to direct the user to the UI
 
-The file `/data/.env` holds all user-configurable environment variables. The setup server watches this file and picks up changes automatically.
+### Adding or changing environment variables
 
-**To add or request a new API key:**
+When the user needs to add a new API key, token, or any env var:
 
-1. Append a placeholder line to `/data/.env`:
-   ```bash
-   echo "BRAVE_API_KEY=" >> /data/.env
-   ```
-2. Tell the user to fill it in:
-   > I need a BRAVE_API_KEY for web search. I've added a placeholder — you can set it at {{BASE_URL}}/setup (Envars tab), or edit `/data/.env` directly.
+> You can add that in your Setup UI → **Envars** tab: {{BASE_URL}}
 
-The server detects the file change and loads the new value into the environment within a few seconds.
+### Connecting a new channel (Telegram, Discord)
 
-## Gateway Restart
+> Add your bot token in the Setup UI → **Envars** tab, then approve the pairing request in the **General** tab.
 
-**IMPORTANT:** Do NOT use `openclaw gateway restart` — it relies on systemctl which is unavailable in this environment. Use the HTTP API instead:
+### Approving or rejecting pairings
+
+When a user asks about pairing their Telegram or Discord account:
+
+> Open the Setup UI → **General** tab. Pending pairing requests appear automatically — click **Approve** or **Reject**.
+
+### Connecting OpenAI Codex OAuth
+
+> Connect or reconnect Codex OAuth from the Setup UI → **Models** tab. Click **Connect Codex OAuth** and follow the popup flow.
+
+### Connecting Google Workspace
+
+> Set up Google Workspace from the Setup UI → **General** tab (Google section). You'll need your OAuth client credentials from Google Cloud Console.
+
+Supported Google services (user selects which to enable during OAuth):
+
+| Service | Read | Write | Google API |
+|---------|------|-------|------------|
+| Gmail | `gmail:read` | `gmail:write` | `gmail.googleapis.com` |
+| Calendar | `calendar:read` | `calendar:write` | `calendar-json.googleapis.com` |
+| Drive | `drive:read` | `drive:write` | `drive.googleapis.com` |
+| Sheets | `sheets:read` | `sheets:write` | `sheets.googleapis.com` |
+| Docs | `docs:read` | `docs:write` | `docs.googleapis.com` |
+| Tasks | `tasks:read` | `tasks:write` | `tasks.googleapis.com` |
+| Contacts | `contacts:read` | `contacts:write` | `people.googleapis.com` |
+| Meet | `meet:read` | `meet:write` | `meet.googleapis.com` |
+
+Default enabled: Gmail (read), Calendar (read+write), Drive (read), Sheets (read), Docs (read).
+
+The `gog` CLI is available to verify Google API access:
 
 ```bash
-curl -s -X POST http://localhost:3000/api/gateway/restart | jq .
-```
-
-This reloads `/data/.env` into the environment and restarts the gateway process. New env var values (like API keys) take effect immediately after restart.
-
-Or tell the user to click **Restart** in the Setup UI (General tab, next to "Gateway").
-
-## Google Workspace (gog CLI)
-
-Google OAuth is managed through the Setup UI. The `gog` CLI is available for direct use:
-
-```bash
-# List authenticated accounts
 gog auth list --plain
-
-# Check API access
 gog gmail labels list --account user@gmail.com
 gog calendar calendars --account user@gmail.com
 gog drive ls --account user@gmail.com
+gog sheets metadata SPREADSHEET_ID --account user@gmail.com
+gog contacts list --account user@gmail.com
 ```
 
-Config lives at `/data/.openclaw/gogcli/`. If the user needs to connect or reconnect Google, direct them to {{BASE_URL}}/setup (Google Workspace section).
+Config lives at `/data/.openclaw/gogcli/`.
 
-## Available API Endpoints
+## What the Setup UI provides (for your awareness)
 
-All endpoints require authentication (cookie-based, same as the Setup UI).
+This is a reference so you know what's available — not an invitation to call these endpoints.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/status` | Gateway status + channel info |
-| GET | `/api/env` | List all environment variables |
-| PUT | `/api/env` | Update environment variables |
-| POST | `/api/gateway/restart` | Restart the gateway |
-| GET | `/api/google/status` | Google auth status |
-| GET | `/api/google/check` | Check Google API access |
+- **General tab**: Gateway status/restart, OpenClaw version + update, channel health, pending pairings, Google Workspace
+- **Models tab**: Primary model selection, provider credentials, Codex OAuth
+- **Envars tab**: View/edit/add environment variables, save to `/data/.env`

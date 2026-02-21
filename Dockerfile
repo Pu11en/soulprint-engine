@@ -6,6 +6,7 @@ WORKDIR /app
 
 COPY package*.json ./
 RUN npm install
+RUN npm install --no-save --package-lock=false openclaw@latest
 
 ENV PATH="/app/node_modules/.bin:$PATH"
 
