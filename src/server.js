@@ -356,9 +356,9 @@ app.post('/api/onboard', async (req, res) => {
     } else if (varMap.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY) {
       onboardArgs.push('--auth-choice', 'apiKey', '--anthropic-api-key', varMap.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY);
     } else if (varMap.OPENAI_API_KEY || process.env.OPENAI_API_KEY) {
-      onboardArgs.push('--auth-choice', 'apiKey', '--openai-api-key', varMap.OPENAI_API_KEY || process.env.OPENAI_API_KEY);
+      onboardArgs.push('--auth-choice', 'openai-api-key', '--openai-api-key', varMap.OPENAI_API_KEY || process.env.OPENAI_API_KEY);
     } else if (varMap.GEMINI_API_KEY || process.env.GEMINI_API_KEY) {
-      onboardArgs.push('--auth-choice', 'apiKey', '--gemini-api-key', varMap.GEMINI_API_KEY || process.env.GEMINI_API_KEY);
+      onboardArgs.push('--auth-choice', 'gemini-api-key', '--gemini-api-key', varMap.GEMINI_API_KEY || process.env.GEMINI_API_KEY);
     }
 
     console.log(`[onboard] Running: openclaw onboard ${onboardArgs.join(' ').replace(/sk-[^\s]+/g, '***')}`);
