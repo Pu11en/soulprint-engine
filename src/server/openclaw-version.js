@@ -61,7 +61,7 @@ const createOpenclawVersionService = ({ gatewayEnv, restartGateway, isOnboarded 
   const installLatestOpenclaw = () =>
     new Promise((resolve, reject) => {
       exec(
-        "npm install --no-save --package-lock=false openclaw@latest",
+        "npm install --omit=dev --no-save --package-lock=false openclaw@latest",
         {
           cwd: kAppDir,
           env: {

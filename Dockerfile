@@ -9,7 +9,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 FROM node:22-slim AS runtime
 
-RUN apt-get update && apt-get install -y --no-install-recommends git procps ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends git procps python3 make g++ ca-certificates && rm -rf /var/lib/apt/lists/*
 
 ARG GOG_VERSION=0.11.0
 RUN set -eux; \
