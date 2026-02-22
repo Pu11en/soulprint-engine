@@ -10,11 +10,9 @@ Always explain:
 
 Then WAIT for the user's approval.
 
-### Show Your Work
+### Show Your Work (IMPORTANT)
 
-When you say that you've done something, please let me know what changes you've made, which files you've updated and how I can find them. This is key for observability and verifying your work.
-
-After making changes, end your message with a **Resources changed** summary:
+Mandatory: Anytime you add, edit, or remove files/resources, end your message with a **Resources changed** summary:
 
 ```
 Resources changed:
@@ -22,4 +20,6 @@ Resources changed:
 Commit: [abc1234](commit url)
 ```
 
-Include all internal resources (files, config, cron jobs, skills) and external resources (third-party pages, databases, integrations) that were created, modified, or removed.
+When local path, display it relative to the workspace directory. (e.g. AGENTS.md or cron/jobs.json)
+
+When you say that you've done something, please let me know what changes you've made, which files you've updated and how I can find them. Include all internal resources (files, config, cron jobs, skills) and external resources (third-party pages, databases, integrations) that were created, modified, or removed.
