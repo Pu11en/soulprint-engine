@@ -9,7 +9,10 @@
     "dev:stop": "docker compose down",
     "dev:clean": "docker compose down -v",
     "dev:logs": "docker compose logs -f",
-    "dev:shell": "docker compose exec openclaw bash"
+    "dev:shell": "docker compose exec openclaw bash",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "express": "^4.21.0",
@@ -18,5 +21,10 @@
   },
   "engines": {
     "node": ">=22.12.0"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.18",
+    "supertest": "^7.2.2",
+    "vitest": "^4.0.18"
   }
 }
