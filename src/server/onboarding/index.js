@@ -3,6 +3,7 @@ const { ensureGithubRepoAccessible } = require("./github");
 const { buildOnboardArgs, writeSanitizedOpenclawConfig } = require("./openclaw");
 const { appendTemplateIfMissing, installControlUiSkill } = require("./workspace");
 const { installHourlyGitSyncScript, installHourlyGitSyncCron } = require("./cron");
+const { isTruthyEnvFlag } = require("../helpers");
 
 const createOnboardingService = ({
   fs,
@@ -116,8 +117,10 @@ const createOnboardingService = ({
     });
     installControlUiSkill({ fs, openclawDir: OPENCLAW_DIR, baseUrl: getBaseUrl(req) });
 
+    const shouldForcePush = isTruthyEnvFlag(process.env.OPENCLAW_DEBUG_FORCE_PUSH);
+    const pushArgs = shouldForcePush ? "-u --force" : "-u";
     await shellCmd(
-      `cd ${OPENCLAW_DIR} && git add -A && git commit -m "initial setup" && git push -u --force origin main`,
+      `cd ${OPENCLAW_DIR} && git add -A && git commit -m "initial setup" && git push ${pushArgs} origin main`,
       { timeout: 30000 },
     ).catch((e) => console.error("[onboard] Git push error:", e.message));
     console.log("[onboard] Initial state committed and pushed");

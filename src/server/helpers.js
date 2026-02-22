@@ -61,6 +61,9 @@ const getCodexAccountId = (accessToken) => {
 
 const normalizeIp = (ip) => String(ip || "").replace(/^::ffff:/, "");
 
+const isTruthyEnvFlag = (value) =>
+  ["1", "true", "yes", "on"].includes(String(value || "").trim().toLowerCase());
+
 const getClientKey = (req) =>
   normalizeIp(
     req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "",
@@ -176,6 +179,7 @@ module.exports = {
   parseJwtPayload,
   getCodexAccountId,
   normalizeIp,
+  isTruthyEnvFlag,
   getClientKey,
   resolveGithubRepoUrl,
   createPkcePair,
