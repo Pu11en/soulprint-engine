@@ -15,7 +15,7 @@ import { CredentialsModal } from "./credentials-modal.js";
 import { showToast } from "./toast.js";
 const html = htm.bind(h);
 
-export function Google() {
+export function Google({ gatewayStatus }) {
   const [google, setGoogle] = useState(null);
   const [scopes, setScopes] = useState(getDefaultScopes());
   const [savedScopes, setSavedScopes] = useState(null);
@@ -51,6 +51,13 @@ export function Google() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  // First load can race gateway startup; refresh when gateway becomes healthy.
+  useEffect(() => {
+    if (gatewayStatus === "running") {
+      refresh();
+    }
+  }, [gatewayStatus, refresh]);
 
   // Listen for OAuth popup postMessage
   useEffect(() => {

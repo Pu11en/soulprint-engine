@@ -144,7 +144,7 @@ const GeneralTab = ({ onSwitchTab }) => {
         onApprove=${handleApprove}
         onReject=${handleReject}
       />
-      <${Google} key=${googleKey} />
+      <${Google} key=${googleKey} gatewayStatus=${gatewayStatus} />
 
       ${repo && html`
         <div class="bg-surface border border-border rounded-xl p-4">
