@@ -72,6 +72,20 @@ const buildOnboardArgs = ({ varMap, selectedProvider, hasCodexOauth, workspaceDi
       "--gemini-api-key",
       varMap.GEMINI_API_KEY || process.env.GEMINI_API_KEY,
     );
+  } else if (
+    selectedProvider === "aws-bedrock" &&
+    (varMap.AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID)
+  ) {
+    onboardArgs.push(
+      "--auth-choice",
+      "aws-bedrock",
+      "--aws-access-key-id",
+      varMap.AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID,
+      "--aws-secret-access-key",
+      varMap.AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY,
+      "--aws-region",
+      varMap.AWS_REGION || process.env.AWS_REGION || "us-east-1",
+    );
   } else if (varMap.ANTHROPIC_TOKEN || process.env.ANTHROPIC_TOKEN) {
     onboardArgs.push(
       "--auth-choice",

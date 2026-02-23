@@ -55,8 +55,24 @@ const kOnboardingModelProviders = new Set([
   "openai",
   "openai-codex",
   "google",
+  "aws-bedrock",
 ]);
 const kFallbackOnboardingModels = [
+  {
+    key: "aws-bedrock/anthropic.claude-opus-4-5-20250514-v1:0",
+    provider: "aws-bedrock",
+    label: "AWS Bedrock Claude Opus 4.5",
+  },
+  {
+    key: "aws-bedrock/anthropic.claude-opus-4-6-20250514-v1:0",
+    provider: "aws-bedrock",
+    label: "AWS Bedrock Claude Opus 4.6",
+  },
+  {
+    key: "aws-bedrock/anthropic.claude-sonnet-4-5-20250514-v1:0",
+    provider: "aws-bedrock",
+    label: "AWS Bedrock Claude Sonnet 4.5",
+  },
   {
     key: "anthropic/claude-opus-4-6",
     provider: "anthropic",

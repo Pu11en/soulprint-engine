@@ -16,12 +16,14 @@ const validateOnboardingInput = ({ vars, modelKey, resolveModelProvider, hasCode
     openai: !!varMap.OPENAI_API_KEY,
     "openai-codex": !!(hasCodexOauth || varMap.OPENAI_API_KEY),
     google: !!varMap.GEMINI_API_KEY,
+    "aws-bedrock": !!(varMap.AWS_ACCESS_KEY_ID && varMap.AWS_SECRET_ACCESS_KEY),
   };
   const hasAnyAi = !!(
     varMap.ANTHROPIC_API_KEY ||
     varMap.ANTHROPIC_TOKEN ||
     varMap.OPENAI_API_KEY ||
     varMap.GEMINI_API_KEY ||
+    (varMap.AWS_ACCESS_KEY_ID && varMap.AWS_SECRET_ACCESS_KEY) ||
     hasCodexOauth
   );
   const hasAi =
