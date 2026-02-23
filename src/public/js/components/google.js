@@ -86,7 +86,7 @@ export function Google({ gatewayStatus }) {
       alert("Select at least one service");
       return;
     }
-    const authUrl = `/auth/google/start?email=${encodeURIComponent(email)}&services=${scopes.join(",")}`;
+    const authUrl = `/auth/google/start?email=${encodeURIComponent(email)}&services=${scopes.join(",")}&_ts=${Date.now()}`;
     const popup = window.open(
       authUrl,
       "google-auth",

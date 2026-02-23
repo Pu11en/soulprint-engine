@@ -11,11 +11,22 @@ export const CredentialsModal = ({ visible, onClose, onSaved }) => {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [instrType, setInstrType] = useState("personal");
+  const [redirectUriCopied, setRedirectUriCopied] = useState(false);
   const fileRef = useRef(null);
 
   if (!visible) return null;
 
   const redirectUri = `${window.location.origin}/auth/google/callback`;
+
+  const copyRedirectUri = async () => {
+    try {
+      await navigator.clipboard.writeText(redirectUri);
+      setRedirectUriCopied(true);
+      window.setTimeout(() => setRedirectUriCopied(false), 1500);
+    } catch {
+      setError("Unable to copy redirect URI");
+    }
+  };
 
   const handleFile = async (e) => {
     const file = e.target.files[0];
@@ -53,6 +64,26 @@ export const CredentialsModal = ({ visible, onClose, onSaved }) => {
 
   const btnCls = (type) =>
     `px-2 py-1 rounded text-xs ${instrType === type ? "bg-gray-700 text-gray-200" : "bg-gray-800 text-gray-400 hover:text-gray-200"}`;
+
+  const renderRedirectUriInstruction = () => html`
+    <div class="mt-1 flex items-center gap-2">
+      <input
+        type="text"
+        readonly
+        value=${redirectUri}
+        onFocus=${(e) => e.target.select()}
+        onclick=${(e) => e.target.select()}
+        class="flex-1 min-w-0 bg-black/40 border border-border rounded px-2 py-1 text-gray-300 text-xs focus:outline-none focus:border-gray-500"
+      />
+      <button
+        type="button"
+        onclick=${copyRedirectUri}
+        class="shrink-0 px-2 py-1 rounded border border-border text-xs text-gray-300 hover:border-gray-500"
+      >
+        ${redirectUriCopied ? "Copied" : "Copy"}
+      </button>
+    </div>
+  `;
 
   return html` <div
     class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50"
@@ -150,9 +181,7 @@ export const CredentialsModal = ({ visible, onClose, onSaved }) => {
                       </li>
                       <li>
                         Add redirect URI:
-                        <code class="bg-black/40 px-1 rounded text-gray-400"
-                          >${redirectUri}</code
-                        >
+                        ${renderRedirectUriInstruction()}
                       </li>
                       <li>
                         Copy Client ID + Secret (or download credentials JSON)
@@ -209,9 +238,7 @@ export const CredentialsModal = ({ visible, onClose, onSaved }) => {
                       </li>
                       <li>
                         Add redirect URI:
-                        <code class="bg-black/40 px-1 rounded text-gray-400"
-                          >${redirectUri}</code
-                        >
+                        ${renderRedirectUriInstruction()}
                       </li>
                       <li>
                         Copy Client ID + Secret (or download credentials JSON)
