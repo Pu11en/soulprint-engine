@@ -134,7 +134,15 @@ else
 fi
 
 # ============================================================
-# 5. If already onboarded, reconcile channels on boot
+# 5. Pre-configure if AWS credentials are set (skip wizard)
+# ============================================================
+
+if [ -n "$AWS_ACCESS_KEY_ID" ] && [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
+  node /app/scripts/pre-configure.js
+fi
+
+# ============================================================
+# 6. If already onboarded, reconcile channels on boot
 # ============================================================
 
 if [ -f "$OPENCLAW_CONFIG_PATH" ]; then
